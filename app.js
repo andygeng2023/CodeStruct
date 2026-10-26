@@ -312,6 +312,64 @@
   saveProject();
 
 
+
+  // Independent inline style overrides for desktop, tablet and mobile.
+  let activeBreakpoint = 'desktop';
+  project.responsiveStyles = project.responsiveStyles || {};
+  function ensureNodeKeys() {
+    $('.canvas-node', canvas).forEach(n => { if (!n.dataset.editorKey) n.dataset.editorKey = 'node-' + Math.random().toString(36).slice(2,11); });
+  }
+  function responsiveEntry(node) {
+    const key = node.dataset.editorKey;
+    project.responsiveStyles[key] = project.responsiveStyles[key] || {base:{},tablet:{},mobile:{}};
+    return project.responsiveStyles[key];
+  }
+  function applyResponsiveBreakpoint(bp) {
+    activeBreakpoint = bp;
+    ensureNodeKeys();
+    $('.canvas-node', canvas).forEach(node => {
+      const entry = responsiveEntry(node);
+      const props = new Set([...Object.keys(entry.base || {}), ...Object.keys(entry.tablet || {}), ...Object.keys(entry.mobile || {})]);
+      props.forEach(prop => {
+        const value = bp === 'desktop' ? entry.base[prop] : ((entry[bp] || {})[prop] ?? entry.base[prop]);
+        if (value == null || value === '') node.style[prop] = '';
+        else node.style[prop] = value;
+      });
+    });
+  }
+  const originalStyle = style;
+  style = function(prop, value) {
+    if (!selected) return;
+    ensureNodeKeys();
+    const entry = responsiveEntry(selected);
+    if (activeBreakpoint === 'desktop') entry.base[prop] = value;
+    else entry[activeBreakpoint][prop] = value;
+    selected.style[prop] = value;
+    dirty();
+  };
+  // Reapply viewport-specific styles after selecting or restoring nodes.
+  const responsiveBaseBindNodes = bindNodes;
+  bindNodes = function() { responsiveBaseBindNodes(); ensureNodeKeys(); applyResponsiveBreakpoint(activeBreakpoint); };
+  const originalViewportHandlers = $('.viewport-button');
+  originalViewportHandlers.forEach(b => {
+    const oldHandler = b.onclick;
+    b.onclick = function() {
+      if (activeBreakpoint === 'desktop') {
+        ensureNodeKeys();
+        $('.canvas-node', canvas).forEach(node => {
+          const entry = responsiveEntry(node);
+          Object.keys(node.style).forEach(prop => {
+            const value = node.style[prop];
+            if (value) entry.base[prop] = value;
+          });
+        });
+      }
+      if (oldHandler) oldHandler.call(this);
+      applyResponsiveBreakpoint(b.dataset.viewport);
+      scheduleSave();
+    };
+  });
+
   // Local class library, CMS collections, interaction rules and custom-code workspace.
   project.classes = project.classes || {};
   project.collections = project.collections || {};
