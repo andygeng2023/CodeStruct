@@ -11,6 +11,7 @@ test('adds elements and persists edits across reload', async ({ page }) => {
   await expect(canvas.locator('[data-node="heading"]')).toHaveCount(1);
   await page.locator('#nodeText').fill('Browser-tested heading');
   await page.locator('#nodeText').dispatchEvent('change');
+  await expect(page.locator('#saveStatus')).toContainText('All changes saved');
   await page.reload();
   await expect(page.locator('#siteCanvas')).toContainText('Browser-tested heading');
 });
