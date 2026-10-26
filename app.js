@@ -551,9 +551,9 @@
     let interactionScript = '';
     if (project.interactions?.length) {
       const rules = JSON.stringify(project.interactions).replace(/</g,'\\u003c');
-      interactionScript = '<script>(function(){const rules=' + rules + ';rules.forEach(r=>{const n=document.getElementById(r.id);if(!n)return;n.addEventListener(r.event,()=>{if(r.action==="navigate"){if(/^(https?:\\/\\/|\\/|#|mailto:)/i.test(r.value))location.href=r.value;}else if(r.action==="toggle-class"){if(/^[a-zA-Z_][\\w-]*$/.test(r.value))n.classList.toggle(r.value);}else if(r.action==="show-message")alert(r.value);});});})();<\\/script>';
+      interactionScript = '<script>(function(){const rules=' + rules + ';rules.forEach(r=>{const n=document.getElementById(r.id);if(!n)return;n.addEventListener(r.event,()=>{if(r.action==="navigate"){if(/^(https?:\\/\\/|\\/|#|mailto:)/i.test(r.value))location.href=r.value;}else if(r.action==="toggle-class"){if(/^[a-zA-Z_][\\w-]*$/.test(r.value))n.classList.toggle(r.value);}else if(r.action==="show-message")alert(r.value);});});})();</scr' + 'ipt>';
     }
-    const customJs = project.customCode?.js ? '<script>' + project.customCode.js.replace(/<\/script/gi,'<\\/script') + '<\\/script>' : '';
+    const customJs = project.customCode?.js ? '<script>' + project.customCode.js.replace(/<\/script/gi,'<\\/script') + '</scr' + 'ipt>' : '';
     const title = esc(project.activePage || 'Website');
     const html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title><style>' + css.replace(/<\/style/gi,'<\\/style') + '</style></head><body>' + clone.outerHTML + interactionScript + customJs + '</body></html>';
     const blob = new Blob([html],{type:'text/html;charset=utf-8'}), url=URL.createObjectURL(blob), link=document.createElement('a');
