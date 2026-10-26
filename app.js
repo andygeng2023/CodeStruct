@@ -236,6 +236,53 @@
     notice('Downloaded a self-contained HTML file for this page. Hosting is not configured.');
   }
 
+
+  // Drag-and-drop reordering and basic container nesting.
+  let draggedNode = null;
+  const dragObserver = new MutationObserver(() => {
+    $('.canvas-node', canvas).forEach(n => { n.draggable = true; });
+  });
+  dragObserver.observe(canvas, {childList:true, subtree:true});
+  $('.canvas-node', canvas).forEach(n => { n.draggable = true; });
+  canvas.addEventListener('dragstart', e => {
+    const node = e.target.closest('.canvas-node');
+    if (!node || !canvas.contains(node)) return;
+    draggedNode = node;
+    e.dataTransfer?.setData('text/plain', 'codestruct-node');
+    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+    node.classList.add('is-dragging');
+  });
+  canvas.addEventListener('dragend', () => {
+    draggedNode?.classList.remove('is-dragging');
+    draggedNode = null;
+    $('.drop-target', canvas).forEach(n => n.classList.remove('drop-target'));
+  });
+  canvas.addEventListener('dragover', e => {
+    if (!draggedNode) return;
+    const target = e.target.closest('.canvas-node');
+    if (target && target !== draggedNode && !draggedNode.contains(target)) {
+      e.preventDefault();
+      $('.drop-target', canvas).forEach(n => n.classList.remove('drop-target'));
+      target.classList.add('drop-target');
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    }
+  });
+  canvas.addEventListener('drop', e => {
+    if (!draggedNode) return;
+    const target = e.target.closest('.canvas-node');
+    if (!target || target === draggedNode || draggedNode.contains(target)) return;
+    e.preventDefault();
+    const canContain = ['container','columns','section'].includes(target.dataset.node);
+    if (canContain && (e.altKey || target.dataset.node === 'container' || target.dataset.node === 'columns')) {
+      target.appendChild(draggedNode);
+    } else {
+      target.parentNode.insertBefore(draggedNode, target);
+    }
+    $('.drop-target', canvas).forEach(n => n.classList.remove('drop-target'));
+    draggedNode.classList.remove('is-dragging');
+    select(draggedNode); snapshot(); scheduleSave(); notice('Element moved');
+  });
+
   // Persist edits and snapshots, without requiring a backend or exposing project data remotely.
   const originalDirty = dirty;
   dirty = function () { originalDirty(); scheduleSave(); };
