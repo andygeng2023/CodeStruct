@@ -233,7 +233,7 @@
       return /^[a-zA-Z_][\\w-]*$/.test(name) && declarations ? '.'+CSS.escape(name)+'{'+declarations+'}' : '';
     }).join('\\n') + '\\n' + (project.customCode?.css || '');
     const title = esc(project.activePage || 'Website');
-    return '<!doctype html>\\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title><style>' + css.replace(/<\\/style/gi, '<\\\\/style') + '</style></head><body>' + clone.outerHTML + '</body></html>';
+    return '<!doctype html>\\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title><style>' + css.split('</style').join('<\\/style') + '</style></head><body>' + clone.outerHTML + '</body></html>';
   }
   function downloadCurrentPage() {
     const html = getExportHTML();
