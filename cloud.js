@@ -132,14 +132,6 @@ function buildPublishedPages(pages, slug) {
   }
   return out;
 }
-function buildPublishedHTML(html, slug) {');
-      const route = '?slug=' + encodeURIComponent(slug) + '&page=' + encodeURIComponent(target);
-      result = result.replace(new RegExp('href=(["\\'])/?' + escaped + '/?\\1', 'gi'), 'href="' + route + '"');
-    }
-    out[key] = result;
-  }
-  return out;
-}
 function buildPublishedHTML(html, slug) {
   const endpoint = 'https://syylksyuulzljivcvopo.supabase.co/functions/v1/sytely-site';
   const slugLiteral = JSON.stringify(slug);
