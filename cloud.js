@@ -10,6 +10,7 @@ let currentUser = null;
 let realtimeChannel = null;
 let lastCloudSaveAt = 0;
 let activeRevision = null;
+let saveInProgress = false;
 const editorSessionId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random();
 let collaboratorPresence = [];
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -142,6 +143,7 @@ async function saveCloudProject(publish) {
   if (!currentUser) return message('Sign in before saving to cloud.', 'error');
   const button = publish ? $('#cloudPublish') : $('#cloudSave');
   if (button) button.disabled = true;
+  saveInProgress = true;
   try {
     const doc = currentDocument();
     const existingId = editor().getCloudProjectId();
@@ -151,7 +153,7 @@ async function saveCloudProject(publish) {
       const existing = await supabase.from('sytely_projects').select('slug,revision').eq('id', existingId).single();
       if (existing.error) throw existing.error;
       slug = existing.data.slug;
-      if (revision == null) revision = Number(existing.data.revision || 1);
+      if (revision == null) throw new Error('Open this project from Cloud first to establish the latest revision before saving.');
     }
     let publishedDocument = null;
     if (publish) {
@@ -202,6 +204,7 @@ async function saveCloudProject(publish) {
     message(error.message || 'Cloud save failed.', 'error');
   } finally {
     if (button) button.disabled = false;
+    saveInProgress = false;
   }
 }
 async function saveVersion() {
@@ -335,7 +338,7 @@ async function attachRealtime() {
     }, payload => {
       const updated = payload.new;
       const nextRevision = Number(updated.revision || 0);
-      if (updated.owner_id !== currentUser?.id || !nextRevision || nextRevision <= Number(activeRevision || 0)) return;
+      if (saveInProgress || updated.owner_id !== currentUser?.id || !nextRevision || nextRevision <= Number(activeRevision || 0)) return;
       const status = $('#collaborationStatus');
       if (status) status.textContent = 'A newer cloud revision is available. Reload before saving to avoid overwriting it.';
       if (confirm('This project changed in another editor session. Load revision ' + nextRevision + '? Your unsaved local changes will be replaced.')) {
