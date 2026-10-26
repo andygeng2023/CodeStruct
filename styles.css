@@ -23,3 +23,12 @@
 .code-editor{width:100%;min-height:160px;resize:vertical;background:#101116;color:#cce7c3;border:1px solid #353943;border-radius:6px;padding:10px;font:11px/1.55 var(--mono);tab-size:2}
 .rail-tool small{font-size:8px}
 @media(max-width:760px){.tool-rail{width:43px}.rail-tool{min-height:45px}.left-panel{width:min(265px,calc(100vw - 55px))}.top-center{display:none}.topbar{gap:5px}.save-status{display:none}.top-actions .button{padding:8px}.brand>span:not(:first-of-type),.brand .slash{display:none}}
+
+.cloud-auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.cloud-message{min-height:18px;margin:10px 0;font-size:11px;line-height:1.5;color:#c8cbd4;overflow-wrap:anywhere}
+.cloud-message[data-kind="error"]{color:#ffaaa6}.cloud-message[data-kind="success"]{color:#a6f28b}
+.cloud-account,.cloud-project,.component-row{display:grid;gap:8px;padding:12px 0;border-bottom:1px solid var(--line);min-width:0}
+.cloud-account strong,.cloud-project strong,.component-row strong{font-size:12px;overflow-wrap:anywhere}
+.cloud-project small{font-size:10px;color:var(--muted);overflow-wrap:anywhere}
+.component-row button{padding:7px 9px;border-radius:5px;background:#202229;border:1px solid #343740;color:#e7e8ed}
+.component-row button:hover{border-color:var(--accent)}
