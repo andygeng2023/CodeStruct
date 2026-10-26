@@ -8,7 +8,10 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
 });
 let currentUser = null;
 let realtimeChannel = null;
-let lastCloudSaveAt = 0;\nlet activeRevision = null;\nconst editorSessionId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random();\nlet collaboratorPresence = [];
+let lastCloudSaveAt = 0;
+let activeRevision = null;
+const editorSessionId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random();
+let collaboratorPresence = [];
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
