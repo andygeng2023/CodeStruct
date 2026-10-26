@@ -540,12 +540,40 @@
   }
   const baseBindNodes = bindNodes;
   bindNodes = function() { baseBindNodes(); applyInteractionRules(); };
-  // New workspace tools. The CMS is explicitly local until a server backend is configured.
+  function renderSiteSettingsPanel() {
+    project.seo = project.seo || {};
+    const seo = project.seo;
+    panelShell('Site settings & SEO', 'Page metadata and a basic accessibility audit',
+      '<div class="page-list"><label class="field-label">Browser title</label><input id="seoTitle" class="full-input" maxlength="120" value="' + esc(seo.title || project.activePage || 'Website') + '">' +
+      '<label class="field-label">Meta description</label><textarea id="seoDescription" class="full-input" rows="3" maxlength="300">' + esc(seo.description || '') + '</textarea>' +
+      '<label class="field-label">Canonical URL (optional)</label><input id="seoCanonical" class="full-input" type="url" placeholder="https://example.com/page" value="' + esc(seo.canonical || '') + '">' +
+      '<label class="field-label">Social preview image (HTTPS)</label><input id="seoSocialImage" class="full-input" type="url" placeholder="https://example.com/preview.png" value="' + esc(seo.socialImage || '') + '">' +
+      '<label><input id="seoIndexable" type="checkbox" ' + (seo.indexable === false ? '' : 'checked') + '> Allow search indexing</label>' +
+      '<button id="saveSiteSeo" class="button primary full-button">Save SEO settings</button><div class="panel-divider"></div><button id="runAccessibilityAudit" class="button secondary full-button">Run accessibility audit</button><div id="accessibilityResults" class="hint" role="status"></div></div>');
+    $('#saveSiteSeo')?.addEventListener('click', () => {
+      const canonical = $('#seoCanonical').value.trim(), socialImage = $('#seoSocialImage').value.trim();
+      if (canonical && !/^https?:\/\//i.test(canonical)) return notice('Canonical URL must use HTTP or HTTPS.');
+      if (socialImage && !/^https:\/\//i.test(socialImage)) return notice('Social preview image must use HTTPS.');
+      project.seo = {title:$('#seoTitle').value.trim().slice(0,120),description:$('#seoDescription').value.trim().slice(0,300),canonical,socialImage,indexable:$('#seoIndexable').checked};
+      scheduleSave(); notice('SEO settings saved');
+    });
+    $('#runAccessibilityAudit')?.addEventListener('click', () => {
+      const issues = [];
+      canvas.querySelectorAll('img').forEach((img,i) => { if (!img.hasAttribute('alt')) issues.push('Image ' + (i+1) + ' is missing alt text.'); });
+      canvas.querySelectorAll('a').forEach((link,i) => { if (!link.getAttribute('href')) issues.push('Link ' + (i+1) + ' has no destination.'); if (!link.textContent.trim() && !link.querySelector('img[alt]')) issues.push('Link ' + (i+1) + ' has no accessible name.'); });
+      canvas.querySelectorAll('button').forEach((button,i) => { if (!button.textContent.trim() && !button.getAttribute('aria-label')) issues.push('Button ' + (i+1) + ' has no accessible name.'); });
+      const headings = [...canvas.querySelectorAll('h1,h2,h3,h4,h5,h6')].map(h => Number(h.tagName.slice(1)));
+      for (let i=1;i<headings.length;i++) if (headings[i] > headings[i-1] + 1) { issues.push('Heading hierarchy skips a level.'); break; }
+      const host = $('#accessibilityResults');
+      if (host) host.textContent = issues.length ? issues.slice(0,12).join(' ') : 'No issues found by this basic check. This is not a full WCAG audit.';
+    });
+  }
+\n  // New workspace tools. The CMS is explicitly local until a server backend is configured.
   $$('.rail-tool').forEach(b => {
     if (b.dataset.panel === 'classes') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderClassesPanel(); };
     if (b.dataset.panel === 'cms') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCmsPanel(); };
     if (b.dataset.panel === 'interactions') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderInteractionsPanel(); };
-    if (b.dataset.panel === 'code') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCodePanel(); };
+    if (b.dataset.panel === 'code') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCodePanel(); };\n    if (b.dataset.panel === 'settings') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderSiteSettingsPanel(); };
   });
   const baseDownloadCurrentPage = downloadCurrentPage;
   downloadCurrentPage = function() {
