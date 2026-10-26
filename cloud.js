@@ -157,7 +157,8 @@ async function saveCloudProject(publish) {
     }
     let publishedDocument = null;
     if (publish) {
-      const pages = buildPublishedPages(editor().getAllExportHTML(), slug);
+      const rawPages = editor().getAllExportHTML();
+      const pages = buildPublishedPages(Object.fromEntries(Object.entries(rawPages).map(([key, html]) => [key, buildPublishedHTML(html, slug)])), slug);
       const activePageKey = String(doc.activePage || 'home').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'home';
       publishedDocument = { ...doc, html: pages[activePageKey] || buildPublishedHTML(editor().getExportHTML(), slug), pages, published_at: new Date().toISOString() };
     }
