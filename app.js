@@ -261,10 +261,10 @@
   // Drag-and-drop reordering and basic container nesting.
   let draggedNode = null;
   const dragObserver = new MutationObserver(() => {
-    $$('.canvas-node', canvas).forEach(n => { n.draggable = true; });
+    $$( '.canvas-node', canvas).forEach(n => { n.draggable = true; });
   });
   dragObserver.observe(canvas, {childList:true, subtree:true});
-  $$('.canvas-node', canvas).forEach(n => { n.draggable = true; });
+  $$( '.canvas-node', canvas).forEach(n => { n.draggable = true; });
   canvas.addEventListener('dragstart', e => {
     const node = e.target.closest('.canvas-node');
     if (!node || !canvas.contains(node)) return;
@@ -337,7 +337,7 @@
   let activeBreakpoint = 'desktop';
   project.responsiveStyles = project.responsiveStyles || {};
   function ensureNodeKeys() {
-    $('.canvas-node', canvas).forEach(n => { if (!n.dataset.editorKey) n.dataset.editorKey = 'node-' + Math.random().toString(36).slice(2,11); });
+    $( '.canvas-node', canvas).forEach(n => { if (!n.dataset.editorKey) n.dataset.editorKey = 'node-' + Math.random().toString(36).slice(2,11); });
   }
   function responsiveEntry(node) {
     const key = node.dataset.editorKey;
@@ -347,7 +347,7 @@
   function applyResponsiveBreakpoint(bp) {
     activeBreakpoint = bp;
     ensureNodeKeys();
-    $('.canvas-node', canvas).forEach(node => {
+    $( '.canvas-node', canvas).forEach(node => {
       const entry = responsiveEntry(node);
       const props = new Set([...Object.keys(entry.base || {}), ...Object.keys(entry.tablet || {}), ...Object.keys(entry.mobile || {})]);
       props.forEach(prop => {
@@ -376,7 +376,7 @@
     b.onclick = function() {
       if (activeBreakpoint === 'desktop') {
         ensureNodeKeys();
-        $('.canvas-node', canvas).forEach(node => {
+        $( '.canvas-node', canvas).forEach(node => {
           const entry = responsiveEntry(node);
           Array.from(node.style).forEach(prop => {
             const value = node.style[prop];
