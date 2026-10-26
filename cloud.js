@@ -65,7 +65,7 @@ function renderCloudPanel(projects = []) {
       '<label class="field-label">Password</label><input id="cloudPassword" type="password" class="full-input" autocomplete="current-password" minlength="8" placeholder="At least 8 characters">' +
       '<div class="cloud-auth-actions"><button id="cloudSignIn" class="button primary">Sign in</button><button id="cloudSignUp" class="button secondary">Create account</button></div>') +
     '<div id="cloudMessage" class="cloud-message" role="status"></div>' +
-    (signedIn ? '<button id="cloudSave" class="button primary full-button">Save current project to cloud</button><button id="cloudPublish" class="button secondary full-button">Publish database snapshot</button><div class="panel-divider"></div><strong class="panel-small-heading">Your cloud projects</strong>' +
+    (signedIn ? '<button id="cloudSave" class="button primary full-button">Save current project to cloud</button><button id="cloudPublish" class="button secondary full-button">Publish website</button><button id="cloudVersion" class="button secondary full-button">Save version</button><button id="cloudHistory" class="button secondary full-button">Version history</button><label class="field-label" for="cloudAsset">Upload image to asset library</label><input id="cloudAsset" class="full-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml"><div id="assetResult"></div><div class="panel-divider"></div><strong class="panel-small-heading">Your cloud projects</strong>' +
       projects.map(p => '<div class="cloud-project"><strong>' + esc(p.name) + '</strong><small>' + esc(p.slug) + (p.is_published ? ' · snapshot published' : ' · draft') + '</small><button class="button secondary full-button" data-cloud-load="' + esc(p.id) + '">Open project</button></div>').join('') +
       '<p class="hint">Cloud saves are private to your authenticated account under database row-level security. Publish stores a snapshot; public hosting is a separate step.</p>' :
       '<p class="hint">Sign in to save and open projects across browsers. Cloud storage uses the Sytely Production Supabase project.</p>') +
@@ -79,6 +79,9 @@ function renderCloudPanel(projects = []) {
   });
   $('#cloudSave')?.addEventListener('click', () => saveCloudProject(false));
   $('#cloudPublish')?.addEventListener('click', () => saveCloudProject(true));
+  $('#cloudVersion')?.addEventListener('click', () => saveVersion());
+  $('#cloudHistory')?.addEventListener('click', () => showVersionHistory());
+  $('#cloudAsset')?.addEventListener('change', event => uploadAsset(event.target.files?.[0]));
   $$('[data-cloud-load]').forEach(button => button.addEventListener('click', () => loadCloudProject(button.dataset.cloudLoad)));
 }
 async function runAuth(mode) {
