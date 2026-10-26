@@ -114,6 +114,12 @@ function makeSlug(name) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'website';
   return base + '-' + Math.random().toString(36).slice(2, 7);
 }
+function buildPublishedHTML(html, slug) {
+  const endpoint = 'https://syylksyuulzljivcvopo.supabase.co/functions/v1/sytely-site';
+  const slugLiteral = JSON.stringify(slug);
+  const script = '<script>(function(){var slug=' + slugLiteral + ';var endpoint=' + JSON.stringify(endpoint) + ';document.querySelectorAll("form").forEach(function(form){form.querySelectorAll("input,textarea,select").forEach(function(el,i){if(!el.name)el.name="field_"+(i+1)});form.querySelectorAll("button").forEach(function(btn){if(!btn.type||btn.type==="button")btn.type="submit"});var status=document.createElement("p");status.setAttribute("role","status");form.appendChild(status);form.addEventListener("submit",async function(event){event.preventDefault();var payload={};new FormData(form).forEach(function(value,key){payload[key]=String(value).slice(0,2000)});status.textContent="Sending…";try{var response=await fetch(endpoint+"?slug="+encodeURIComponent(slug),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({payload:payload})});if(!response.ok)throw new Error("Submission failed ("+response.status+")");status.textContent="Thanks. Your message was sent.";form.reset()}catch(error){status.textContent=error.message||"Could not send your message."}})})})();<\/script>';
+  return html.replace('</body>', script + '</body>');
+}
 async function saveCloudProject(publish) {
   if (!currentUser) return message('Sign in before saving to cloud.', 'error');
   const button = publish ? $('#cloudPublish') : $('#cloudSave');
@@ -121,15 +127,21 @@ async function saveCloudProject(publish) {
   try {
     const doc = currentDocument();
     const existingId = editor().getCloudProjectId();
+    let slug = makeSlug(doc.name);
+    if (existingId) {
+      const existing = await supabase.from('sytely_projects').select('slug').eq('id', existingId).single();
+      if (existing.error) throw existing.error;
+      slug = existing.data.slug;
+    }
     const row = {
       owner_id: currentUser.id,
       name: String(doc.name || 'Untitled website').slice(0, 120),
-      slug: existingId ? undefined : makeSlug(doc.name),
       document: doc,
       updated_at: new Date().toISOString()
     };
+    if (!existingId) row.slug = slug;
     if (publish) {
-      row.published_document = { ...doc, html: editor().getExportHTML(), published_at: new Date().toISOString() };
+      row.published_document = { ...doc, html: buildPublishedHTML(editor().getExportHTML(), slug), published_at: new Date().toISOString() };
       row.is_published = true;
       row.published_at = new Date().toISOString();
     }
@@ -143,7 +155,7 @@ async function saveCloudProject(publish) {
     if (error) throw error;
     editor().setCloudProjectId(data.id);
     window.dispatchEvent(new Event('codestruct-cloud-project-selected'));
-    message(publish ? 'Published snapshot saved to Supabase.' : 'Project saved to cloud.', 'success');
+    message(publish ? 'Published website: https://syylksyuulzljivcvopo.supabase.co/functions/v1/sytely-site?slug=' + slug : 'Project saved to cloud.', 'success');
     await showCloudPanel();
   } catch (error) {
     message(error.message || 'Cloud save failed.', 'error');
