@@ -358,7 +358,7 @@
         ensureNodeKeys();
         $('.canvas-node', canvas).forEach(node => {
           const entry = responsiveEntry(node);
-          Object.keys(node.style).forEach(prop => {
+          Array.from(node.style).forEach(prop => {
             const value = node.style[prop];
             if (value) entry.base[prop] = value;
           });
