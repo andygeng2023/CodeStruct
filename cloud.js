@@ -82,7 +82,6 @@ function renderCloudPanel(projects = []) {
   $('#cloudPublish')?.addEventListener('click', () => saveCloudProject(true));
   $('#cloudVersion')?.addEventListener('click', () => saveVersion());
   $('#cloudHistory')?.addEventListener('click', () => showVersionHistory());
-  $('#cloudAsset')?.addEventListener('change', event => uploadAsset(event.target.files?.[0]));
   $$('[data-cloud-load]').forEach(button => button.addEventListener('click', () => loadCloudProject(button.dataset.cloudLoad)));
 }
 async function runAuth(mode) {
