@@ -690,6 +690,17 @@
   window.CodeStructEditor = {
     getProject() { capturePage(); return JSON.parse(JSON.stringify(project)); },
     getExportHTML() { capturePage(); return getExportHTML(); },
+    getAllExportHTML() {
+      capturePage();
+      const active = project.activePage, markup = canvas.innerHTML, output = {};
+      const slugify = value => String(value).toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,80) || 'page';
+      for (const [name, html] of Object.entries(project.pages || {})) {
+        project.activePage = name; canvas.innerHTML = html; bindNodes();
+        output[slugify(name)] = getExportHTML();
+      }
+      project.activePage = active; canvas.innerHTML = markup; bindNodes(); inspector();
+      return output;
+    },
     insertImage(url, alt = 'Uploaded image') {
       if (!String(url).startsWith('https://')) throw new Error('Only HTTPS image URLs can be inserted.');
       const section = document.createElement('section'); section.className = 'new-section canvas-node'; section.dataset.node = 'image'; section.tabIndex = 0;
