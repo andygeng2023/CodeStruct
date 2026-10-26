@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111318">
+  <meta name="description" content="CodeStruct visual website editor">
+  <title>CodeStruct — Designer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark">C</div><span>codestruct</span><span class="slash">/</span><button class="project-name" id="projectName">Untitled website <span>⌄</span></button></div>
+      <div class="top-center"><button class="top-tab active" data-mode="design">Designer</button><button class="top-tab" data-mode="preview">Preview</button><button class="top-tab" data-mode="code">Code</button></div>
+      <div class="top-actions"><span class="save-status" id="saveStatus"><i></i> All changes saved</span><button class="icon-button" title="Undo" id="undoBtn">↶</button><button class="icon-button" title="Redo" id="redoBtn">↷</button><button class="button secondary" id="previewBtn">Preview</button><button class="button primary" id="publishBtn">Publish ↗</button></div>
+    </header>
+    <main class="workbench">
+      <nav class="tool-rail" aria-label="Workspace tools">
+        <button class="rail-tool selected" data-panel="add" title="Add elements"><span>＋</span><small>Add</small></button>
+        <button class="rail-tool" data-panel="pages" title="Pages"><span>▤</span><small>Pages</small></button>
+        <button class="rail-tool" data-panel="layers" title="Navigator"><span>☷</span><small>Layers</small></button>
+        <button class="rail-tool" data-panel="assets" title="Assets"><span>▧</span><small>Assets</small></button>
+        <div class="rail-spacer"></div><button class="rail-tool" data-panel="settings" title="Project settings"><span>⚙</span><small>Settings</small></button>
+      </nav>
+      <aside class="left-panel" id="leftPanel">
+        <div class="panel-heading"><div><strong id="panelTitle">Add elements</strong><p id="panelSubtitle">Build your page from blocks</p></div><button class="icon-button subtle" id="collapseLeft" title="Collapse panel">‹</button></div>
+        <div id="panelContent">
+          <label class="searchbox"><span>⌕</span><input id="elementSearch" placeholder="Search elements…" autocomplete="off"></label>
+          <div class="category-tabs"><button class="category active" data-category="All">All</button><button class="category" data-category="Layout">Layout</button><button class="category" data-category="Basic">Basic</button><button class="category" data-category="Interactive">Interactive</button><button class="category" data-category="Media">Media</button></div>
+          <div class="element-grid" id="elementGrid"></div>
+          <div class="panel-tip"><span>⌘</span> Click an element to add it to the canvas</div>
+        </div>
+      </aside>
+      <section class="editor-area">
+        <div class="canvas-toolbar">
+          <div class="breadcrumb"><span>Pages</span><span>›</span><strong>Home</strong><span class="status-pill">Published draft</span></div>
+          <div class="canvas-controls"><button class="icon-button" id="zoomOut" title="Zoom out">−</button><span id="zoomValue">100%</span><button class="icon-button" id="zoomIn" title="Zoom in">＋</button><span class="control-divider"></span><button class="viewport-button active" data-viewport="desktop" title="Desktop viewport">▰</button><button class="viewport-button" data-viewport="tablet" title="Tablet viewport">▯</button><button class="viewport-button" data-viewport="mobile" title="Mobile viewport">▯</button></div>
+        </div>
+        <div class="canvas-scroll" id="canvasScroll">
+          <div class="canvas-frame" id="canvasFrame">
+            <div class="site-canvas" id="siteCanvas" aria-label="Website canvas">
+              <div class="site-nav canvas-node" data-node="nav" tabindex="0"><div class="site-logo"><span class="logo-symbol">◈</span> northstar</div><div class="site-links"><span>Work</span><span>About</span><span>Journal</span></div><button class="site-cta">Let's talk <span>↗</span></button></div>
+              <section class="hero canvas-node" data-node="hero" tabindex="0"><div class="eyebrow"><span class="eyebrow-dot"></span> INDEPENDENT DIGITAL STUDIO</div><h1>Make your next<br><em>big thing</em> matter.</h1><p class="hero-copy">We partner with ambitious teams to build brands and digital experiences that move people forward.</p><div class="hero-actions"><button class="dark-cta">Explore our work <span>↗</span></button><span class="hero-note">Strategy · Design · Development</span></div><div class="hero-art" aria-hidden="true"><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="art-core">N<span>✳</span></div><div class="art-label">IDEAS IN MOTION<br><b>EST. 2020</b></div><div class="art-index">01 / 04</div></div><div class="hero-bottom"><span>SCROLL TO EXPLORE</span><span class="scroll-line"></span><span>BASED EVERYWHERE ↗</span></div></section>
+              <section class="work-section canvas-node" data-node="work" tabindex="0"><div class="section-top"><span>01 — SELECTED WORK</span><span>2022 — 2025</span></div><div class="work-heading"><h2>Good work.<br><em>Good people.</em></h2><p>A few recent collaborations<br>we're proud to put our name on.</p></div><div class="project-grid"><article class="project-card project-one"><div class="project-image image-one"><span class="image-badge">01 / BRAND</span><div class="project-graphic graphic-one">FORM<br><small>FOLLOWS FEELING</small></div><span class="project-arrow">↗</span></div><div class="project-meta"><strong>Form & Field</strong><span>Brand identity, Digital</span></div></article><article class="project-card project-two"><div class="project-image image-two"><span class="image-badge">02 / DIGITAL</span><div class="project-graphic graphic-two">KIN<span>°</span></div><span class="project-arrow">↗</span></div><div class="project-meta"><strong>Kin Objects</strong><span>E-commerce, Art direction</span></div></article></div></section>
+              <footer class="site-footer canvas-node" data-node="footer" tabindex="0"><div class="footer-kicker">HAVE A GOOD ONE IN MIND?</div><h2>Let's make<br><em>it happen.</em></h2><button class="dark-cta">Start a project <span>↗</span></button><div class="footer-bottom"><span>© NORTHSTAR STUDIO 2025</span><span>INSTAGRAM ↗ &nbsp; LINKEDIN ↗</span><span>MADE WITH INTENTION.</span></div></footer>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-bar"><div class="bottom-left"><span class="green-dot"></span><span id="selectionLabel">No element selected</span></div><div class="bottom-right"><span>Canvas</span><span class="bottom-divider"></span><span id="viewportLabel">Desktop · 1440px</span></div></div>
+      </section>
+      <aside class="right-panel" id="rightPanel">
+        <div class="inspector-heading"><div><strong>Style</strong><span class="inspector-subtitle">Element settings</span></div><div class="inspector-tabs"><button class="inspector-tab active" data-inspector="style">◐</button><button class="inspector-tab" data-inspector="settings">⚙</button></div></div>
+        <div id="inspectorContent">
+          <div class="empty-selection" id="emptySelection"><div class="empty-icon">◫</div><strong>Select an element</strong><p>Choose any element on the canvas to edit its content and styles.</p><div class="shortcut-row"><kbd>Esc</kbd><span>Deselect element</span></div></div>
+          <div id="styleControls" hidden>
+            <div class="selected-element"><span class="element-type-icon">▱</span><div><strong id="selectedName">Section</strong><small id="selectedTag">section</small></div><button class="icon-button subtle" id="renameNode" title="Rename element">✎</button></div>
+            <div class="inspector-section"><button class="section-toggle"><span>▾</span> Content</button><div class="section-body" id="contentControls"></div></div>
+            <div class="inspector-section"><button class="section-toggle"><span>▾</span> Layout</button><div class="section-body"><label class="field-label">Display</label><div class="segmented"><button data-display="block">Block</button><button data-display="flex">Flex</button><button data-display="grid">Grid</button></div><div class="field-grid"><label><span>Width</span><input id="widthInput" value="100%" aria-label="Width"></label><label><span>Min height</span><input id="heightInput" value="auto" aria-label="Min height"></label></div><div class="field-grid"><label><span>Padding</span><input id="paddingInput" value="32px" aria-label="Padding"></label><label><span>Gap</span><input id="gapInput" value="16px" aria-label="Gap"></label></div><label class="field-label">Alignment</label><div class="align-controls"><button data-align="flex-start">↤</button><button data-align="center">↔</button><button data-align="flex-end">↦</button><button data-align="space-between">☷</button></div></div></div>
+            <div class="inspector-section"><button class="section-toggle"><span>▾</span> Typography</button><div class="section-body"><div class="field-grid"><label><span>Font size</span><input id="fontSizeInput" value="16px"></label><label><span>Weight</span><select id="fontWeightInput"><option>400</option><option>500</option><option>600</option><option>700</option><option>800</option></select></label></div><label class="field-label">Text color</label><div class="color-field"><input id="textColorInput" type="color" value="#171815"><input id="textColorHex" value="#171815" aria-label="Text color hex"></div></div></div>
+            <div class="inspector-section"><button class="section-toggle"><span>▾</span> Background</button><div class="section-body"><label class="field-label">Background color</label><div class="color-field"><input id="bgColorInput" type="color" value="#ffffff"><input id="bgColorHex" value="#ffffff" aria-label="Background color hex"></div><label class="field-label">Border radius</label><input id="radiusInput" class="full-input" value="0px"></div></div>
+            <div class="inspector-section"><button class="section-toggle"><span>▾</span> Effects</button><div class="section-body"><label class="field-label">Opacity <span id="opacityValue">100%</span></label><input id="opacityInput" type="range" min="10" max="100" value="100"></div></div>
+          </div>
+          <div id="settingsControls" hidden><div class="inspector-section"><div class="section-body"><label class="field-label">Element ID</label><input id="nodeIdInput" class="full-input" placeholder="element-id"><p class="hint">Use a unique ID for links and custom styling.</p><button class="button danger full-button" id="deleteNode">Delete element</button></div></div></div>
+        </div>
+      </aside>
+    </main>
+    <div class="toast" id="toast" role="status"></div>
+    <dialog id="publishDialog" class="modal"><form method="dialog"><button class="modal-close" aria-label="Close">×</button><div class="modal-mark">↗</div><h2>Ready to publish?</h2><p>Your current design is ready to preview. Hosting and custom-domain publishing can be connected in project settings.</p><label class="field-label">Site URL</label><div class="publish-url"><span>https://</span><input id="siteSlug" value="northstar-studio.codestruct.site"><button type="button" id="copyUrl">Copy</button></div><div class="modal-actions"><button class="button secondary">Cancel</button><button class="button primary" id="confirmPublish">Mark as published ↗</button></div></form></dialog>
+    <dialog id="codeDialog" class="modal code-modal"><form method="dialog"><button class="modal-close" aria-label="Close">×</button><h2>Export HTML</h2><p>Copy a snapshot of your current canvas markup.</p><textarea id="exportCode" spellcheck="false"></textarea><div class="modal-actions"><button class="button secondary">Close</button><button class="button primary" id="copyCode">Copy HTML</button></div></form></dialog>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
