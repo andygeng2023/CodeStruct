@@ -10,3 +10,16 @@
 .canvas-node.is-dragging{opacity:.42;cursor:grabbing}
 .canvas-node.drop-target{outline:2px solid var(--accent)!important;outline-offset:-2px}
 .page-item.active{border-color:var(--accent);color:var(--accent)}
+
+/* Additional visual-development workspace panels */
+.panel-divider{height:1px;background:var(--line);margin:14px 0}
+.panel-small-heading{font-size:11px;color:#b8bbc4}
+.class-row,.interaction-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);min-width:0}
+.class-row button:first-child,.interaction-row span{flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis}
+.class-row button,.interaction-row button{background:#252831;color:#e6e8ed;border:1px solid #383c47;border-radius:5px;padding:6px 8px}
+.cms-collection{display:grid;gap:7px;padding:12px 0;border-bottom:1px solid var(--line)}
+.cms-row{padding:9px;text-align:left;border:1px solid #343740;background:#202229;color:#ddd;border-radius:5px}
+.cms-row:hover,.class-row button:hover{border-color:var(--accent)}
+.code-editor{width:100%;min-height:160px;resize:vertical;background:#101116;color:#cce7c3;border:1px solid #353943;border-radius:6px;padding:10px;font:11px/1.55 var(--mono);tab-size:2}
+.rail-tool small{font-size:8px}
+@media(max-width:760px){.tool-rail{width:43px}.rail-tool{min-height:45px}.left-panel{width:min(265px,calc(100vw - 55px))}.top-center{display:none}.topbar{gap:5px}.save-status{display:none}.top-actions .button{padding:8px}.brand>span:not(:first-of-type),.brand .slash{display:none}}
