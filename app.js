@@ -573,7 +573,8 @@
     if (b.dataset.panel === 'classes') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderClassesPanel(); };
     if (b.dataset.panel === 'cms') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCmsPanel(); };
     if (b.dataset.panel === 'interactions') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderInteractionsPanel(); };
-    if (b.dataset.panel === 'code') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCodePanel(); };\n    if (b.dataset.panel === 'settings') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderSiteSettingsPanel(); };
+    if (b.dataset.panel === 'code') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCodePanel(); };
+    if (b.dataset.panel === 'settings') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderSiteSettingsPanel(); };
   });
   const baseDownloadCurrentPage = downloadCurrentPage;
   downloadCurrentPage = function() {
