@@ -396,7 +396,7 @@ async function attachRealtime() {
     }, payload => {
       const updated = payload.new;
       const nextRevision = Number(updated.revision || 0);
-      if (saveInProgress || updated.owner_id !== currentUser?.id || !nextRevision || nextRevision <= Number(activeRevision || 0)) return;
+      if (saveInProgress || !nextRevision || nextRevision <= Number(activeRevision || 0)) return;
       const status = $('#collaborationStatus');
       if (status) status.textContent = 'A newer cloud revision is available. Reload before saving to avoid overwriting it.';
       if (confirm('This project changed in another editor session. Load revision ' + nextRevision + '? Your unsaved local changes will be replaced.')) {
