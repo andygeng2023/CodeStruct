@@ -1,31 +1,31 @@
 # CodeStruct Visual Website Editor
 
-CodeStruct is a no-build, browser-based visual website editor inspired by the general workflow of tools such as Webflow. It is not an exact copy of Webflow and does not currently provide feature parity with its hosted design, CMS, collaboration, and publishing platform.
+CodeStruct is a browser-based visual website editor with a multi-panel design workspace. It borrows common visual-builder concepts; it is not an exact Webflow clone or a production-equivalent alternative.
 
-## Run
+## Run locally
 
-Open `index.html` in a modern browser, or serve this directory with a static server:
+Open `index.html` in a modern browser, or run:
 
 ```sh
 python3 -m http.server 8000
 ```
 
-Then open `http://localhost:8000`.
+Then visit `http://localhost:8000`.
 
-## Current editor capabilities
+## Implemented in this client-side build
 
-- Four-region editor shell: tool rail, element/page/assets panel, responsive canvas, and style inspector.
-- Starter page and element palette for sections, containers, columns, headings, paragraphs, buttons, links, image/video placeholders, dividers, quotes, and forms.
-- Canvas selection, inline text editing, element naming and IDs, deletion, duplication (`Ctrl/Cmd+D)), and style controls for layout, spacing, typography, colors, radius, and opacity.
-- Desktop, tablet, and mobile canvas viewport presets; zoom; undo/redo; keyboard shortcuts.
-- Multiple local pages: create, switch, rename, duplicate, and delete pages.
-- Image uploads stored in the current browser's local project, with uploaded images insertable onto the canvas.
-- Automatic local browser storage for project pages, assets, and project name.
-- HTML export and a standalone current-page HTML download with CSS embedded where the browser permits stylesheet access.
-- Responsive preview mode and a keyboard-accessible selection baseline.
+- Element palette and canvas selection, inline text editing, element deletion, duplication, drag reordering and basic container nesting.
+- Style inspector for dimensions, spacing, display, alignment, typography, color, background, radius, opacity and element IDs.
+- Desktop, tablet and mobile viewport presets, zoom, preview, undo/redo and keyboard shortcuts.
+- Local auto-save and restore using browser storage.
+- Local multi-page create, switch, rename, duplicate and delete.
+- Local image asset upload and insertion into the canvas.
+- A style-class name library, local CMS collection/item CRUD, simple click/hover interactions, and custom CSS/JavaScript snippets for export.
+- Standalone HTML export for the current page with accessible stylesheet rules embedded where possible.
+- Node syntax/smoke checks in GitHub Actions.
 
-## Important limitations
+## Limitations that still matter
 
-This is an evolving client-side editor, **not a production-ready Webflow replacement**. Data is stored in the current browser profile only; there is no cloud database, login, team collaboration, permissions, CMS collections, dynamic data binding, reusable symbols/components, breakpoint-specific style model, full interaction timeline, code-component sandbox, SEO workflow, form backend, asset CDN, version history, or actual public deployment/custom-domain publishing. Multiple pages are managed locally, but the download action exports only the current page, not a multi-page site bundle. Large images may exceed browser local-storage quota. Exported pages should be reviewed and tested before production use.
+This is **not feature-parity with Webflow and is not yet production-ready**. CMS collections and assets are local to the browser, not cloud-backed. The current class library manages class names but is not a complete CSS cascade/style manager. Responsive viewport presets are canvas previews, not an independent breakpoint style system. Interactions are a small set of event actions, not a timeline-based animation engine. Custom code is not sandboxed or run in the editor; review exported code carefully. Export downloads only the current page and does not create a multi-page deployment bundle.
 
-No third-party dependencies or build step are required. The repository includes static validation via Node.js CI; browser-level interaction tests should be added before treating the editor as release-ready.
+Not implemented here: production authentication, project database and cloud sync, collaboration/permissions, reusable component instances, full CMS publishing and dynamic bindings, full responsive style cascade, robust visual layout engine, animation timeline, production form handling, asset CDN, SEO/a11y auditing workflow, version history, automatic deployment, hosting/domain configuration, or comprehensive real-browser end-to-end tests. These require additional server infrastructure, browser automation, and deployment configuration rather than being safely represented by local UI controls.
