@@ -404,7 +404,7 @@
       if (!name) return notice('Enter a component name');
       const id = project.components[name]?.id || 'component-' + Math.random().toString(36).slice(2,11);
       selected.dataset.componentId = id;
-      project.components[name] = { id, html: selected.outerHTML, instances: [] };
+      const componentSource = selected.cloneNode(true); componentSource.classList.remove('selected');\n      project.components[name] = { id, html: componentSource.outerHTML, instances: [] };
       capturePage();
       for (const pageName of pageNames()) {
         const template = document.createElement('template'); template.innerHTML = project.pages[pageName] || '';
