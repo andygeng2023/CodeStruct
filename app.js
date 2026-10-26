@@ -539,5 +539,19 @@
     notice('Downloaded current page HTML. Hosting and multi-page packaging still require deployment setup.');
   };
 
+  window.CodeStructEditor = {
+    getProject() { capturePage(); return JSON.parse(JSON.stringify(project)); },
+    getCloudProjectId() { return project.cloudProjectId || null; },
+    setCloudProjectId(id) { project.cloudProjectId = id || null; saveProject(); },
+    loadCloudDocument(doc, id) {
+      if (!doc || typeof doc !== 'object' || !doc.pages || typeof doc.pages !== 'object') throw new Error('Invalid project document');
+      Object.assign(project, doc);
+      project.cloudProjectId = id || project.cloudProjectId || null;
+      project.activePage = project.pages[project.activePage] ? project.activePage : (Object.keys(project.pages)[0] || 'Home');
+      canvas.innerHTML = project.pages[project.activePage] || '';
+      selected = null; bindNodes(); inspector(); updatePageLabel(); renderItems(); snapshot(); saveProject();
+    },
+    refresh() { bindNodes(); renderItems(); saveProject(); }
+  };
   bindNodes(); renderItems(); snapshot(); snapshotStatus();
 })();
