@@ -2,6 +2,7 @@
   'use strict';
   const $ = (s, root = document) => root.querySelector(s);
   const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+  const $$$ = $$;
   const canvas = $('#siteCanvas'), frame = $('#canvasFrame'), left = $('#leftPanel');
   if (!canvas) { console.error('CodeStruct editor canvas is missing.'); return; }
   let selected = null, zoom = 100, category = 'All', history = [], historyAt = -1, toastTimer;
