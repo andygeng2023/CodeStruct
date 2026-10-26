@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const html = fs.readFileSync('index.html', 'utf8');
 const app = fs.readFileSync('app.js', 'utf8');
 const cloud = fs.readFileSync('cloud.js', 'utf8');
+const cloudAssets = fs.readFileSync('cloud-assets.js', 'utf8');
 
 assert.match(html, /id="siteCanvas"/, 'canvas root exists');
 assert.match(html, /id="inspectorContent"/, 'inspector exists');
@@ -19,6 +20,10 @@ assert.match(app, /function applyResponsiveBreakpoint\(/, 'responsive breakpoint
 assert.match(cloud, /signInWithPassword/, 'cloud sign-in is wired');
 assert.match(cloud, /from\('sytely_projects'\)/, 'cloud project storage uses the configured Supabase table');
 assert.match(cloud, /postgres_changes/, 'cross-session update listener is implemented');
+assert.match(app, /getExportHTML\(\)/, 'exported HTML can be generated for public hosting');
+assert.match(cloud, /buildPublishedHTML\(/, 'publish embeds a standalone HTML snapshot');
+assert.match(cloud, /showVersionHistory\(/, 'cloud version history is implemented');
+assert.match(cloudAssets, /sytely-assets/, 'cloud asset storage integration is implemented');
 
 const htmlIds = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]));
 const dynamicIds = new Set(['nodeText', 'newPage', 'renamePage', 'duplicatePage', 'deletePage', 'assetUpload', 'exportSettings', 'classNameInput', 'applyClass', 'collectionName', 'createCollection', 'interactionEvent', 'interactionAction', 'interactionValue', 'addInteraction', 'customCss', 'customJs', 'saveCustomCode']);
