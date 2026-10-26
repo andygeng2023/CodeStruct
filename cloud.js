@@ -114,6 +114,20 @@ function makeSlug(name) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'website';
   return base + '-' + Math.random().toString(36).slice(2, 7);
 }
+function buildPublishedPages(pages, slug) {
+  const keys = Object.keys(pages || {});
+  const out = {};
+  for (const [key, html] of Object.entries(pages || {})) {
+    let result = html;
+    for (const target of keys) {
+      const escaped = target.replace(/[.*+?^\${}()|[\]\\]/g, '\\function buildPublishedHTML(html, slug) {');
+      const route = '?slug=' + encodeURIComponent(slug) + '&page=' + encodeURIComponent(target);
+      result = result.replace(new RegExp('href=(["\\'])/?' + escaped + '/?\\1', 'gi'), 'href="' + route + '"');
+    }
+    out[key] = result;
+  }
+  return out;
+}
 function buildPublishedHTML(html, slug) {
   const endpoint = 'https://syylksyuulzljivcvopo.supabase.co/functions/v1/sytely-site';
   const slugLiteral = JSON.stringify(slug);
@@ -141,7 +155,7 @@ async function saveCloudProject(publish) {
     };
     if (!existingId) row.slug = slug;
     if (publish) {
-      row.published_document = { ...doc, html: buildPublishedHTML(editor().getExportHTML(), slug), published_at: new Date().toISOString() };
+      const pages = buildPublishedPages(editor().getAllExportHTML(), slug);\n      const activePageKey = String(doc.activePage || 'home').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'home';\n      row.published_document = { ...doc, html: pages[activePageKey] || buildPublishedHTML(editor().getExportHTML(), slug), pages, published_at: new Date().toISOString() };
       row.is_published = true;
       row.published_at = new Date().toISOString();
     }
