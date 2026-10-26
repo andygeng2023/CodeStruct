@@ -60,7 +60,7 @@
   function exportHtml(){const clone=canvas.cloneNode(true);clone.querySelectorAll('.selected').forEach(n=>n.classList.remove('selected'));clone.querySelectorAll('[contenteditable]').forEach(n=>n.removeAttribute('contenteditable'));clone.querySelectorAll('.canvas-node').forEach(n=>n.removeAttribute('tabindex'));const html='<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CodeStruct export</title><link rel="stylesheet" href="styles.css"></head><body>'+clone.outerHTML+'</body></html>';$('#exportCode').value=html;$('#codeDialog').showModal();}
   $$('.top-tab').forEach(b=>b.onclick=()=>{const mode=b.dataset.mode;$$('.top-tab').forEach(x=>x.classList.toggle('active',x===b));document.body.classList.toggle('preview-mode',mode==='preview');document.body.classList.toggle('code-mode',mode==='code');if(mode==='code')exportHtml();if(mode==='preview')notice('Preview mode. Choose Designer to continue editing.');});
   $('#previewBtn')?.addEventListener('click',()=> $('[data-mode="preview"]')?.click());$('#undoBtn')?.addEventListener('click',undo);$('#redoBtn')?.addEventListener('click',redo);
-  $('#publishBtn')?.addEventListener('click',()=>$('#publishDialog').showModal());$('#confirmPublish')?.addEventListener('click',e=>{e.preventDefault();$('#publishDialog').close();if($('#saveStatus')){$('#saveStatus').innerHTML='<i></i> Draft marked published';$('#saveStatus').style.color='#a6f28b';}notice('Marked as published locally. Hosting is not configured.');});
+  $('#publishBtn')?.addEventListener('click',()=>$('#publishDialog').showModal());$('#confirmPublish')?.addEventListener('click',e=>{e.preventDefault();$('#publishDialog').close();downloadCurrentPage();});
   $('#copyUrl')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText('https://'+$('#siteSlug').value);notice('URL copied');}catch{ $('#siteSlug').select();notice('Select and copy the URL manually');}});
   $('#copyCode')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('#exportCode').value);notice('HTML copied');}catch{$('#exportCode').select();notice('Select and copy the HTML manually');}});
   $('#projectName')?.addEventListener('click',()=>{const name=prompt('Website name:', $('#projectName').childNodes[0].textContent.trim());if(name?.trim()){$('#projectName').childNodes[0].textContent=name.trim()+' ';notice('Project name updated');}});
@@ -91,7 +91,7 @@
     }
   }
   function scheduleSave() {
-    dirty();
+    originalDirty();
     clearTimeout(persistTimer);
     if ($('#saveStatus')) {
       $('#saveStatus').innerHTML = '<i></i> Saving…';
