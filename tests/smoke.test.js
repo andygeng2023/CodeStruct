@@ -28,7 +28,7 @@ assert.match(cloudAssets, /sytely-assets/, 'cloud asset storage integration is i
 const htmlIds = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]));
 const dynamicIds = new Set(['nodeText', 'newPage', 'renamePage', 'duplicatePage', 'deletePage', 'assetUpload', 'exportSettings', 'classNameInput', 'applyClass', 'collectionName', 'createCollection', 'interactionEvent', 'interactionAction', 'interactionValue', 'addInteraction', 'customCss', 'customJs', 'saveCustomCode']);
 const referencedIds = new Set([...app.matchAll(/\$\('#([A-Za-z][\w-]*)'/g)].map(m => m[1]));
-const generatedIds = ['saveComponent', 'componentName', 'saveClassStyles', 'classPadding', 'classFontSize', 'classRadius', 'classTextColor', 'classBgColor', 'saveSiteSeo', 'seoCanonical', 'seoSocialImage', 'seoTitle', 'seoDescription', 'seoIndexable', 'runAccessibilityAudit', 'accessibilityResults'];
+const generatedIds = ['saveComponent', 'componentName', 'saveClassStyles', 'classPadding', 'classFontSize', 'classRadius', 'classTextColor', 'classBgColor', 'saveSiteSeo', 'seoCanonical', 'seoSocialImage', 'seoTitle', 'seoDescription', 'seoIndexable', 'runAccessibilityAudit', 'accessibilityResults', 'animPreset', 'animDelay', 'animDuration', 'applyAnim', 'animTimeline', 'bindCmsCollection', 'bindCmsList', 'syncCmsCloud'];
 generatedIds.forEach(id => dynamicIds.add(id));
 const missing = [...referencedIds].filter(id => !htmlIds.has(id) && !dynamicIds.has(id));
 assert.deepEqual(missing, [], 'static app selectors should point to existing or documented dynamic IDs');
