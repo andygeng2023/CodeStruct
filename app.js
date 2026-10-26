@@ -30,7 +30,7 @@
   function undo(){if(historyAt<1)return notice('Nothing more to undo');historyAt--;restore(history[historyAt]);notice('Change undone');}
   function redo(){if(historyAt>=history.length-1)return notice('Nothing more to redo');historyAt++;restore(history[historyAt]);notice('Change restored');}
   function renderItems(){const host=$('#elementGrid');if(!host)return;const q=($('#elementSearch')?.value||'').trim().toLowerCase();host.innerHTML=items.filter(x=>(category==='All'||x[1]===category)&&x[0].toLowerCase().includes(q)).map(x=>'<button class="element-card" data-add="'+esc(x[0])+'"><span class="element-icon">'+x[2]+'</span><span class="element-name">'+x[0]+'</span><span class="element-category">'+x[1]+'</span></button>').join('');$$('[data-add]',host).forEach(b=>b.onclick=()=>addItem(b.dataset.add));}
-  function bindNodes(){$$('.canvas-node',canvas).forEach(n=>{n.tabIndex=0;n.onclick=e=>{if(e.target.closest('[contenteditable="true"]')){e.stopPropagation();select(n);return;}if(e.target.closest('a'))e.preventDefault();e.stopPropagation();select(n);};n.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target===n){e.preventDefault();select(n);}};n.querySelectorAll('[contenteditable="true"]').forEach(t=>{t.oninput=()=>{dirty();scheduleSave();};t.onblur=()=>{snapshot();scheduleSave();};});});}
+  function bindNodes(){$$$('.canvas-node',canvas).forEach(n=>{n.tabIndex=0;n.onclick=e=>{if(e.target.closest('[contenteditable="true"]')){e.stopPropagation();select(n);return;}if(e.target.closest('a'))e.preventDefault();e.stopPropagation();select(n);};n.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target===n){e.preventDefault();select(n);}};n.querySelectorAll('[contenteditable="true"]').forEach(t=>{t.oninput=()=>{dirty();scheduleSave();};t.onblur=()=>{snapshot();scheduleSave();};});});}
   function addItem(name){const item=items.find(x=>x[0]===name);if(!item)return;const temp=document.createElement('template');temp.innerHTML=item[3].trim();const node=temp.content.firstElementChild;canvas.insertBefore(node,selected?.parentElement===canvas?selected.nextSibling:null);bindNodes();select(node);snapshot();notice(name+' added');node.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});}
   function select(n){selected?.classList.remove('selected');selected=n;if(n){if(typeof ensureNodeKeys==='function')ensureNodeKeys();n.classList.add('selected');}inspector();const label=$('#selectionLabel');if(label)label.textContent=n?(names[n.dataset.node]||n.dataset.node||'Element')+' selected':'No element selected';window.dispatchEvent(new CustomEvent('codestruct-selection-changed',{detail:{elementKey:n?.dataset.editorKey||null,nodeName:n?(names[n.dataset.node]||n.dataset.node||'Element'):''}}));if(n)scheduleSave();}
   function rgbHex(v){if(!v)return '#171815';if(v.startsWith('#'))return v;const m=v.match(/\d+/g);return m&&m.length>=3?'#'+m.slice(0,3).map(n=>Number(n).toString(16).padStart(2,'0')).join(''):'#171815';}
@@ -53,7 +53,7 @@
   $$('.section-toggle').forEach(b=>b.onclick=()=>{const body=b.nextElementSibling;body.hidden=!body.hidden;b.querySelector('span').textContent=body.hidden?'▸':'▾';});
   $$('.inspector-tab').forEach(b=>b.onclick=()=>{const settings=b.dataset.inspector==='settings';$$('.inspector-tab').forEach(x=>x.classList.toggle('active',x===b));$('#settingsControls').dataset.active=String(settings);$('#styleControls').hidden=!selected||settings;$('#emptySelection').hidden=!!selected||settings;$('#settingsControls').hidden=!selected||!settings;});
   $$('.category').forEach(b=>b.onclick=()=>{category=b.dataset.category;$$('.category').forEach(x=>x.classList.toggle('active',x===b));renderItems();});$('#elementSearch')?.addEventListener('input',renderItems);
-  $$('.rail-tool').forEach(b=>b.onclick=()=>{const panel=b.dataset.panel;$$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b));if(panel==='add'){left.classList.remove('collapsed');$('#panelTitle').textContent='Add elements';$('#panelSubtitle').textContent='Build your page from blocks';$('#panelContent').hidden=false;renderItems();return;}if(panel==='layers'){left.classList.remove('collapsed');$('#panelTitle').textContent='Navigator';$('#panelSubtitle').textContent='Select an element on the page';$('#panelContent').innerHTML=$$('.canvas-node',canvas).map(n=>'<button class="layer-item" data-layer="'+esc(n.dataset.node)+'">▱　'+esc(names[n.dataset.node]||n.dataset.node)+'</button>').join('');$$('[data-layer]').forEach(x=>x.onclick=()=>{const n=$$('.canvas-node',canvas).find(n=>n.dataset.node===x.dataset.layer);if(n)select(n);});return;}const labels={pages:['Pages','Manage site pages'],assets:['Assets','Images and media'],settings:['Project settings','Site configuration']};const [title,sub]=labels[panel]||labels.pages;$('#panelTitle').textContent=title;$('#panelSubtitle').textContent=sub;$('#panelContent').innerHTML=panel==='pages'?'<div class="page-list"><button class="page-item active">▤　Home</button><button class="page-item" id="newPage">＋　New page</button></div>':panel==='assets'?'<div class="asset-empty"><strong>Assets</strong><p>Use Image elements to add placeholders. Asset uploads are not connected yet.</p></div>':'<div class="page-list"><p class="hint">Changes currently exist in this browser session only.</p><button class="button secondary full-button" id="exportSettings">Export HTML</button></div>';$('#newPage')?.addEventListener('click',()=>notice('Multiple-page routing is not implemented yet'));$('#exportSettings')?.addEventListener('click',exportHtml);left.classList.remove('collapsed');});
+  $$$('.rail-tool').forEach(b=>b.onclick=()=>{const panel=b.dataset.panel;$$$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b));if(panel==='add'){left.classList.remove('collapsed');$('#panelTitle').textContent='Add elements';$('#panelSubtitle').textContent='Build your page from blocks';$('#panelContent').hidden=false;renderItems();return;}if(panel==='layers'){left.classList.remove('collapsed');$('#panelTitle').textContent='Navigator';$('#panelSubtitle').textContent='Select an element on the page';$('#panelContent').innerHTML=$$('.canvas-node',canvas).map(n=>'<button class="layer-item" data-layer="'+esc(n.dataset.node)+'">▱　'+esc(names[n.dataset.node]||n.dataset.node)+'</button>').join('');$$('[data-layer]').forEach(x=>x.onclick=()=>{const n=$$$('.canvas-node',canvas).find(n=>n.dataset.node===x.dataset.layer);if(n)select(n);});return;}const labels={pages:['Pages','Manage site pages'],assets:['Assets','Images and media'],settings:['Project settings','Site configuration']};const [title,sub]=labels[panel]||labels.pages;$('#panelTitle').textContent=title;$('#panelSubtitle').textContent=sub;$('#panelContent').innerHTML=panel==='pages'?'<div class="page-list"><button class="page-item active">▤　Home</button><button class="page-item" id="newPage">＋　New page</button></div>':panel==='assets'?'<div class="asset-empty"><strong>Assets</strong><p>Use Image elements to add placeholders. Asset uploads are not connected yet.</p></div>':'<div class="page-list"><p class="hint">Changes currently exist in this browser session only.</p><button class="button secondary full-button" id="exportSettings">Export HTML</button></div>';$('#newPage')?.addEventListener('click',()=>notice('Multiple-page routing is not implemented yet'));$('#exportSettings')?.addEventListener('click',exportHtml);left.classList.remove('collapsed');});
   $('#collapseLeft')?.addEventListener('click',()=>left.classList.toggle('collapsed'));
   function setZoom(v){zoom=Math.max(50,Math.min(125,v));$('#zoomValue').textContent=zoom+'%';frame.style.transform='scale('+zoom/100+')';frame.style.width=(100/(zoom/100))+'%';frame.style.marginBottom=(frame.offsetHeight*(zoom/100-1))+'px';}
   $('#zoomIn')?.addEventListener('click',()=>setZoom(zoom+10));$('#zoomOut')?.addEventListener('click',()=>setZoom(zoom-10));
@@ -261,10 +261,10 @@
   // Drag-and-drop reordering and basic container nesting.
   let draggedNode = null;
   const dragObserver = new MutationObserver(() => {
-    $$( '.canvas-node', canvas).forEach(n => { n.draggable = true; });
+    $$$( '.canvas-node', canvas).forEach(n => { n.draggable = true; });
   });
   dragObserver.observe(canvas, {childList:true, subtree:true});
-  $$( '.canvas-node', canvas).forEach(n => { n.draggable = true; });
+  $$$( '.canvas-node', canvas).forEach(n => { n.draggable = true; });
   canvas.addEventListener('dragstart', e => {
     const node = e.target.closest('.canvas-node');
     if (!node || !canvas.contains(node)) return;
@@ -312,9 +312,9 @@
   canvas.addEventListener('input', e => { if (e.target.matches('[contenteditable="true"]')) scheduleSave(); });
   canvas.addEventListener('blur', e => { if (e.target.matches('[contenteditable="true"]')) { originalSnapshot(); scheduleSave(); } }, true);
   // Keep panel navigation functional rather than showing placeholder messages.
-  $$('.rail-tool').forEach(b => {
-    if (b.dataset.panel === 'pages') b.onclick = () => { $$('.rail-tool').forEach(x => x.classList.toggle('selected', x === b)); left.classList.remove('collapsed'); renderPagesPanel(); };
-    if (b.dataset.panel === 'assets') b.onclick = () => { $$('.rail-tool').forEach(x => x.classList.toggle('selected', x === b)); left.classList.remove('collapsed'); renderAssetsPanel(); };
+  $$$('.rail-tool').forEach(b => {
+    if (b.dataset.panel === 'pages') b.onclick = () => { $$$('.rail-tool').forEach(x => x.classList.toggle('selected', x === b)); left.classList.remove('collapsed'); renderPagesPanel(); };
+    if (b.dataset.panel === 'assets') b.onclick = () => { $$$('.rail-tool').forEach(x => x.classList.toggle('selected', x === b)); left.classList.remove('collapsed'); renderAssetsPanel(); };
   });
   document.addEventListener('keydown', e => {
     const editing = e.target.matches('input,textarea,select,[contenteditable="true"]');
@@ -337,7 +337,7 @@
   let activeBreakpoint = 'desktop';
   project.responsiveStyles = project.responsiveStyles || {};
   function ensureNodeKeys() {
-    $( '.canvas-node', canvas).forEach(n => { if (!n.dataset.editorKey) n.dataset.editorKey = 'node-' + Math.random().toString(36).slice(2,11); });
+    $$( '.canvas-node', canvas).forEach(n => { if (!n.dataset.editorKey) n.dataset.editorKey = 'node-' + Math.random().toString(36).slice(2,11); });
   }
   function responsiveEntry(node) {
     const key = node.dataset.editorKey;
@@ -347,7 +347,7 @@
   function applyResponsiveBreakpoint(bp) {
     activeBreakpoint = bp;
     ensureNodeKeys();
-    $( '.canvas-node', canvas).forEach(node => {
+    $$( '.canvas-node', canvas).forEach(node => {
       const entry = responsiveEntry(node);
       const props = new Set([...Object.keys(entry.base || {}), ...Object.keys(entry.tablet || {}), ...Object.keys(entry.mobile || {})]);
       props.forEach(prop => {
@@ -376,7 +376,7 @@
     b.onclick = function() {
       if (activeBreakpoint === 'desktop') {
         ensureNodeKeys();
-        $( '.canvas-node', canvas).forEach(node => {
+        $$( '.canvas-node', canvas).forEach(node => {
           const entry = responsiveEntry(node);
           Array.from(node.style).forEach(prop => {
             const value = node.style[prop];
@@ -501,9 +501,9 @@
     }
   });
   linkedComponentObserver.observe(canvas, {subtree:true,childList:true,characterData:true,attributes:true});
-  $('.rail-tool').forEach(b => {
+  $$('.rail-tool').forEach(b => {
     if (b.dataset.panel === 'components') b.onclick = () => {
-      $('.rail-tool').forEach(x => x.classList.toggle('selected', x === b));
+      $$('.rail-tool').forEach(x => x.classList.toggle('selected', x === b));
       left.classList.remove('collapsed'); renderComponentsPanel();
     };
   });
@@ -559,7 +559,7 @@
       project.classes[name] = {color:$('#classTextColor').value,backgroundColor:$('#classBgColor').value,padding,fontSize,borderRadius:radius};
       applyClassRules(); scheduleSave(); renderClassesPanel(); notice('Shared class styles saved');
     });
-    $('[data-delete-class]').forEach(b => b.onclick = () => {
+    $$('[data-delete-class]').forEach(b => b.onclick = () => {
       const name = b.dataset.deleteClass;
       if (!confirm('Remove class "' + name + '" from this project?')) return;
       $$('.' + CSS.escape(name), canvas).forEach(n => n.classList.remove(name));
@@ -647,7 +647,7 @@
     styleNode.textContent = '@keyframes csFade{from{opacity:0}to{opacity:1}}@keyframes csRise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}@keyframes csSlide{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:translateX(0)}}@keyframes csScale{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}' +
       '[data-anim-preset]{animation-duration:var(--cs-anim-duration,600ms);animation-delay:var(--cs-anim-delay,0ms);animation-fill-mode:both;animation-timing-function:cubic-bezier(.2,.7,.2,1)}' +
       '[data-anim-preset="fade"]{animation-name:csFade}[data-anim-preset="rise"]{animation-name:csRise}[data-anim-preset="slide"]{animation-name:csSlide}[data-anim-preset="scale"]{animation-name:csScale}';
-    $('.canvas-node',canvas).forEach(node => {
+    $$('.canvas-node',canvas).forEach(node => {
       node.style.setProperty('--cs-anim-duration',(Number(node.dataset.animDuration)||600)+'ms');
       node.style.setProperty('--cs-anim-delay',(Number(node.dataset.animDelay)||0)+'ms');
     });
@@ -663,7 +663,7 @@
       '<label class="field-label">Canonical URL (optional)</label><input id="seoCanonical" class="full-input" type="url" placeholder="https://example.com/page" value="' + esc(seo.canonical || '') + '">' +
       '<label class="field-label">Social preview image (HTTPS)</label><input id="seoSocialImage" class="full-input" type="url" placeholder="https://example.com/preview.png" value="' + esc(seo.socialImage || '') + '">' +
       '<label><input id="seoIndexable" type="checkbox" ' + (seo.indexable === false ? '' : 'checked') + '> Allow search indexing</label>' +
-      '<button id="saveSiteSeo" class="button primary full-button">Save SEO settings</button><div class="panel-divider"></div><strong class="panel-small-heading">Animation timeline</strong><p class="hint">Select an element, set its entrance preset and timing, then add it to the timeline.</p><label class="field-label">Preset</label><select id="animPreset" class="full-input"><option value="">None</option><option value="fade">Fade in</option><option value="rise">Rise</option><option value="slide">Slide in</option><option value="scale">Scale in</option></select><label class="field-label">Start delay (ms)</label><input id="animDelay" class="full-input" type="number" min="0" max="10000" value="0"><label class="field-label">Duration (ms)</label><input id="animDuration" class="full-input" type="number" min="100" max="10000" value="600"><button id="applyAnim" class="button secondary full-button">Apply animation to selected</button><div id="animTimeline" class="page-list">' + $('.canvas-node',canvas).filter(n=>n.dataset.animPreset).map(n=>'<div class="interaction-row"><span>' + esc(n.dataset.node || n.tagName.toLowerCase()) + '</span><small>' + esc(n.dataset.animPreset) + ' · ' + esc(n.dataset.animDelay || '0') + 'ms</small><button data-remove-anim="' + esc(n.dataset.editorKey || '') + '">×</button></div>').join('') + '</div><div class="panel-divider"></div><button id="runAccessibilityAudit" class="button secondary full-button">Run accessibility audit</button><div id="accessibilityResults" class="hint" role="status"></div></div>');
+      '<button id="saveSiteSeo" class="button primary full-button">Save SEO settings</button><div class="panel-divider"></div><strong class="panel-small-heading">Animation timeline</strong><p class="hint">Select an element, set its entrance preset and timing, then add it to the timeline.</p><label class="field-label">Preset</label><select id="animPreset" class="full-input"><option value="">None</option><option value="fade">Fade in</option><option value="rise">Rise</option><option value="slide">Slide in</option><option value="scale">Scale in</option></select><label class="field-label">Start delay (ms)</label><input id="animDelay" class="full-input" type="number" min="0" max="10000" value="0"><label class="field-label">Duration (ms)</label><input id="animDuration" class="full-input" type="number" min="100" max="10000" value="600"><button id="applyAnim" class="button secondary full-button">Apply animation to selected</button><div id="animTimeline" class="page-list">' + $$('.canvas-node',canvas).filter(n=>n.dataset.animPreset).map(n=>'<div class="interaction-row"><span>' + esc(n.dataset.node || n.tagName.toLowerCase()) + '</span><small>' + esc(n.dataset.animPreset) + ' · ' + esc(n.dataset.animDelay || '0') + 'ms</small><button data-remove-anim="' + esc(n.dataset.editorKey || '') + '">×</button></div>').join('') + '</div><div class="panel-divider"></div><button id="runAccessibilityAudit" class="button secondary full-button">Run accessibility audit</button><div id="accessibilityResults" class="hint" role="status"></div></div>');
     $('#saveSiteSeo')?.addEventListener('click', () => {
       const canonical = $('#seoCanonical').value.trim(), socialImage = $('#seoSocialImage').value.trim();
       if (canonical && !/^https?:\/\//i.test(canonical)) return notice('Canonical URL must use HTTP or HTTPS.');
@@ -683,8 +683,8 @@
       }
       scheduleSave(); snapshot(); applyAnimationStyles(); renderSiteSettingsPanel(); notice('Animation timeline updated');
     });
-    $('[data-remove-anim]').forEach(button => button.onclick = () => {
-      const node = $('.canvas-node',canvas).find(n => n.dataset.editorKey === button.dataset.removeAnim);
+    $$('[data-remove-anim]').forEach(button => button.onclick = () => {
+      const node = $$('.canvas-node',canvas).find(n => n.dataset.editorKey === button.dataset.removeAnim);
       if (node) { delete node.dataset.animPreset; delete node.dataset.animDelay; delete node.dataset.animDuration; applyAnimationStyles(); scheduleSave(); renderSiteSettingsPanel(); }
     });
     $('#runAccessibilityAudit')?.addEventListener('click', () => {
@@ -700,12 +700,12 @@
   }
 
   // New workspace tools. The CMS is explicitly local until a server backend is configured.
-  $$('.rail-tool').forEach(b => {
-    if (b.dataset.panel === 'classes') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderClassesPanel(); };
-    if (b.dataset.panel === 'cms') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCmsPanel(); };
-    if (b.dataset.panel === 'interactions') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderInteractionsPanel(); };
-    if (b.dataset.panel === 'code') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCodePanel(); };
-    if (b.dataset.panel === 'settings') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderSiteSettingsPanel(); };
+  $$$('.rail-tool').forEach(b => {
+    if (b.dataset.panel === 'classes') b.onclick = () => { $$$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderClassesPanel(); };
+    if (b.dataset.panel === 'cms') b.onclick = () => { $$$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCmsPanel(); };
+    if (b.dataset.panel === 'interactions') b.onclick = () => { $$$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderInteractionsPanel(); };
+    if (b.dataset.panel === 'code') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCodePanel(); };
+    if (b.dataset.panel === 'settings') b.onclick = () => { $$$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderSiteSettingsPanel(); };
   });
   const baseDownloadCurrentPage = downloadCurrentPage;
   downloadCurrentPage = function() {
@@ -770,10 +770,10 @@
   remoteStyle.textContent = '.canvas-node.remote-selected{outline:2px dashed #8b7cff!important;outline-offset:3px}.remote-selection-label{font-size:11px;color:#8b7cff}';
   document.head.appendChild(remoteStyle);
   window.addEventListener('codestruct-remote-selection', event => {
-    $('.canvas-node.remote-selected',canvas).forEach(node => { node.classList.remove('remote-selected'); delete node.dataset.remoteSelectedBy; });
+    $$('.canvas-node.remote-selected',canvas).forEach(node => { node.classList.remove('remote-selected'); delete node.dataset.remoteSelectedBy; });
     const key = event.detail?.elementKey;
     if (!key) return;
-    const node = $('.canvas-node[data-editor-key]',canvas).find(item => item.dataset.editorKey === key);
+    const node = $$('.canvas-node[data-editor-key]',canvas).find(item => item.dataset.editorKey === key);
     if (node) { node.classList.add('remote-selected'); node.dataset.remoteSelectedBy = String(event.detail.email || 'Collaborator').slice(0,80); }
   });
   ensureNodeKeys();
