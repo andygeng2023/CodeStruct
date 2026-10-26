@@ -422,10 +422,16 @@
       const source = selected.cloneNode(true);
       source.dataset.componentId = component.id;
       component.html = source.outerHTML;
+      $('.canvas-node[data-component-id="' + CSS.escape(component.id) + '"]', canvas).forEach(node => {
+        if (node === selected) return;
+        const replacement = document.createElement('template'); replacement.innerHTML = component.html;
+        const fresh = replacement.content.firstElementChild;
+        if (fresh) node.replaceWith(fresh);
+      });
       for (const pageName of pageNames()) {
+        if (pageName === project.activePage) continue;
         const template = document.createElement('template'); template.innerHTML = project.pages[pageName] || '';
         template.content.querySelectorAll('[data-component-id="' + CSS.escape(component.id) + '"]').forEach(node => {
-          if (node === selected && pageName === project.activePage) return;
           const replacement = document.createElement('template'); replacement.innerHTML = component.html;
           const fresh = replacement.content.firstElementChild;
           if (fresh) node.replaceWith(fresh);
