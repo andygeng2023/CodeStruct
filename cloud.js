@@ -174,8 +174,7 @@ async function saveCloudProject(publish) {
       if (error) throw error;
       const result = Array.isArray(data) ? data[0] : data;
       if (!result?.ok) {
-        activeRevision = Number(result?.current_revision ?? revision);
-        throw new Error('Save conflict: another session changed this project. Reload the latest version before editing further.');
+        throw new Error('Save conflict: another session changed this project. Reopen the cloud project to load the latest revision before saving again.');
       }
       activeRevision = Number(result.current_revision);
     } else {
