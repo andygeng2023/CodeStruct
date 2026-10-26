@@ -236,9 +236,9 @@ async function showVersionHistory() {
 async function loadCloudProject(id) {
   try {
     const { data, error } = await supabase.from('sytely_projects')
-      .select('id,name,document').eq('id', id).single();
+      .select('id,name,document,revision').eq('id', id).single();
     if (error) throw error;
-    editor().loadCloudDocument(data.document, data.id);
+    activeRevision = Number(data.revision || 1);\n    editor().loadCloudDocument(data.document, data.id);
     window.dispatchEvent(new Event('codestruct-cloud-project-selected'));
     message('Cloud project opened.', 'success');
   } catch (error) {
@@ -258,22 +258,43 @@ async function showCloudPanel() {
 async function attachRealtime() {
   if (realtimeChannel) { await supabase.removeChannel(realtimeChannel); realtimeChannel = null; }
   const id = editor().getCloudProjectId();
-  if (!id || !currentUser || realtimeChannel) return;
-  realtimeChannel = supabase.channel('codestruct-project-' + id)
+  if (!id || !currentUser) return;
+  realtimeChannel = supabase.channel('codestruct-project-' + id, { config: { presence: { key: editorSessionId } } })
+    .on('presence', { event: 'sync' }, () => {
+      const state = realtimeChannel?.presenceState?.() || {};
+      collaboratorPresence = Object.values(state).flat().filter(item => item.user_id !== currentUser?.id || item.session_id !== editorSessionId);
+      const status = $('#collaborationStatus');
+      if (status) status.textContent = collaboratorPresence.length
+        ? collaboratorPresence.length + ' other editor session(s) online. Saves use revision checks to prevent overwrites.'
+        : 'You are the only active editor. Revision checks protect against stale saves.';
+    })
     .on('postgres_changes', {
       event: 'UPDATE', schema: 'public', table: 'sytely_projects', filter: 'id=eq.' + id
     }, payload => {
       const updated = payload.new;
-      const savedAt = updated.updated_at ? new Date(updated.updated_at).getTime() : 0;
-      if (updated.owner_id !== currentUser?.id || !savedAt) return;
-      if (confirm('This project changed in another session. Load the latest cloud version?')) {
+      const nextRevision = Number(updated.revision || 0);
+      if (updated.owner_id !== currentUser?.id || !nextRevision || nextRevision <= Number(activeRevision || 0)) return;
+      const status = $('#collaborationStatus');
+      if (status) status.textContent = 'A newer cloud revision is available. Reload before saving to avoid overwriting it.';
+      if (confirm('This project changed in another editor session. Load revision ' + nextRevision + '? Your unsaved local changes will be replaced.')) {
+        activeRevision = nextRevision;
         editor().loadCloudDocument(updated.document, updated.id);
-        notify('Loaded the latest cloud version.');
+        notify('Loaded the latest cloud revision.');
       }
     })
-    .subscribe(status => {
-      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+    .subscribe(async status => {
+      if (status === 'SUBSCRIBED') {
+        const { data } = await supabase.auth.getUser();
+        await realtimeChannel.track({
+          user_id: data?.user?.id || currentUser?.id,
+          email: currentUser?.email || 'Editor',
+          session_id: editorSessionId,
+          joined_at: new Date().toISOString()
+        });
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         console.warn('Realtime collaboration subscription unavailable:', status);
+        const host = $('#collaborationStatus');
+        if (host) host.textContent = 'Live presence is unavailable. Revision checks remain active when saving.';
       }
     });
 }
