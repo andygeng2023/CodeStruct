@@ -231,6 +231,10 @@
     css += '\\n' + Object.entries(project.classes || {}).map(([name,props]) => {
       const declarations = Object.entries(props || {}).filter(([k,v]) => ['color','backgroundColor','padding','fontSize','borderRadius'].includes(k) && typeof v === 'string' && /^[#a-zA-Z0-9.%() ,/-]+$/.test(v)).map(([k,v]) => k.replace(/[A-Z]/g,c=>'-'+c.toLowerCase())+':'+v).join(';');
       return /^[a-zA-Z_][\\w-]*$/.test(name) && declarations ? '.'+CSS.escape(name)+'{'+declarations+'}' : '';
+    }).join('\\n') + '\\n' + Object.entries(project.responsiveStyles || {}).map(([key,entry]) => {
+      const decl = values => Object.entries(values || {}).filter(([prop,value]) => typeof value === 'string' && /^[#a-zA-Z0-9.%() ,/-]+$/.test(value)).map(([prop,value]) => prop.replace(/[A-Z]/g,c=>'-'+c.toLowerCase())+':'+value).join(';');
+      const selector = '[data-editor-key="' + key.replace(/[^a-zA-Z0-9_-]/g,'') + '"]';
+      return (decl(entry.base) ? selector+'{'+decl(entry.base)+'}' : '') + (decl(entry.tablet) ? '@media(max-width:991px){'+selector+'{'+decl(entry.tablet)+'}}' : '') + (decl(entry.mobile) ? '@media(max-width:767px){'+selector+'{'+decl(entry.mobile)+'}}' : '');
     }).join('\\n') + '\\n' + (project.customCode?.css || '');
     const title = esc(project.seo?.title || project.activePage || 'Website');
     const description = esc(project.seo?.description || '');
