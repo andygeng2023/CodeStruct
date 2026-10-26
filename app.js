@@ -52,7 +52,7 @@
   $$('.section-toggle').forEach(b=>b.onclick=()=>{const body=b.nextElementSibling;body.hidden=!body.hidden;b.querySelector('span').textContent=body.hidden?'▸':'▾';});
   $$('.inspector-tab').forEach(b=>b.onclick=()=>{const settings=b.dataset.inspector==='settings';$$('.inspector-tab').forEach(x=>x.classList.toggle('active',x===b));$('#settingsControls').dataset.active=String(settings);$('#styleControls').hidden=!selected||settings;$('#emptySelection').hidden=!!selected||settings;$('#settingsControls').hidden=!selected||!settings;});
   $$('.category').forEach(b=>b.onclick=()=>{category=b.dataset.category;$$('.category').forEach(x=>x.classList.toggle('active',x===b));renderItems();});$('#elementSearch')?.addEventListener('input',renderItems);
-  $$('.rail-tool').forEach(b=>b.onclick=()=>{const panel=b.dataset.panel;$$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b));if(panel==='add'){left.classList.remove('collapsed');$('#panelTitle').textContent='Add elements';$('#panelSubtitle').textContent='Build your page from blocks';$('#panelContent').hidden=false;renderItems();return;}if(panel==='layers'){left.classList.remove('collapsed');$('#panelTitle').textContent='Navigator';$('#panelSubtitle').textContent='Select an element on the page';$('#panelContent').innerHTML=$$('.canvas-node',canvas).map(n=>'<button class="layer-item" data-layer="'+esc(n.dataset.node)+'">▱　'+esc(names[n.dataset.node]||n.dataset.node)+'</button>').join('');$$('[data-layer]').forEach(x=>x.onclick=()=>{const n=$$('.canvas-node',canvas).find(n=>n.dataset.node===x.dataset.layer);if(n)select(n);});return;}const labels={pages:['Pages','Manage site pages'],assets:['Assets','Images and media'],settings:['Project settings','Site configuration']};const [title,sub]=labels[panel]||labels.pages;$('#panelTitle').textContent=title;$('#panelSubtitle').textContent=sub;$('#panelContent').innerHTML=panel==='pages'?'<div class="page-list"><button class="page-item active">▤　Home</button><button class="page-item" id="newPage">＋　New page</button></div>':panel==='assets'?'<div class="asset-empty"><strong>Assets</strong><p>Use Image elements to add placeholders. Asset uploads are not connected yet.</p></div>':'<div class="page-list"><p class="hint">Changes currently exist in this browser session only.</p><button class="button secondary full-button" id="exportSettings">Export HTML</button></div>';$('#newPage')?.addEventListener('click',()=>notice('Multiple-page routing is not implemented yet'));$('#exportSettings')?.addEventListener('click',exportHtml);left.classList.remove('collapsed');});
+  $$$('.rail-tool').forEach(b=>b.onclick=()=>{const panel=b.dataset.panel;$$$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b));if(panel==='add'){left.classList.remove('collapsed');$('#panelTitle').textContent='Add elements';$('#panelSubtitle').textContent='Build your page from blocks';$('#panelContent').hidden=false;renderItems();return;}if(panel==='layers'){left.classList.remove('collapsed');$('#panelTitle').textContent='Navigator';$('#panelSubtitle').textContent='Select an element on the page';$('#panelContent').innerHTML=$$('.canvas-node',canvas).map(n=>'<button class="layer-item" data-layer="'+esc(n.dataset.node)+'">▱　'+esc(names[n.dataset.node]||n.dataset.node)+'</button>').join('');$$('[data-layer]').forEach(x=>x.onclick=()=>{const n=$$('.canvas-node',canvas).find(n=>n.dataset.node===x.dataset.layer);if(n)select(n);});return;}const labels={pages:['Pages','Manage site pages'],assets:['Assets','Images and media'],settings:['Project settings','Site configuration']};const [title,sub]=labels[panel]||labels.pages;$('#panelTitle').textContent=title;$('#panelSubtitle').textContent=sub;$('#panelContent').innerHTML=panel==='pages'?'<div class="page-list"><button class="page-item active">▤　Home</button><button class="page-item" id="newPage">＋　New page</button></div>':panel==='assets'?'<div class="asset-empty"><strong>Assets</strong><p>Use Image elements to add placeholders. Asset uploads are not connected yet.</p></div>':'<div class="page-list"><p class="hint">Changes currently exist in this browser session only.</p><button class="button secondary full-button" id="exportSettings">Export HTML</button></div>';$('#newPage')?.addEventListener('click',()=>notice('Multiple-page routing is not implemented yet'));$('#exportSettings')?.addEventListener('click',exportHtml);left.classList.remove('collapsed');});
   $('#collapseLeft')?.addEventListener('click',()=>left.classList.toggle('collapsed'));
   function setZoom(v){zoom=Math.max(50,Math.min(125,v));$('#zoomValue').textContent=zoom+'%';frame.style.transform='scale('+zoom/100+')';frame.style.width=(100/(zoom/100))+'%';frame.style.marginBottom=(frame.offsetHeight*(zoom/100-1))+'px';}
   $('#zoomIn')?.addEventListener('click',()=>setZoom(zoom+10));$('#zoomOut')?.addEventListener('click',()=>setZoom(zoom-10));
@@ -127,7 +127,7 @@
       '<button class="page-item" id="duplicatePage">▣　Duplicate current page</button>' +
       (pageNames().length > 1 ? '<button class="page-item" id="deletePage">−　Delete current page</button>' : '') +
       '</div>';
-    $('[data-open-page]').forEach(b => b.onclick = () => {
+    $$('[data-open-page]').forEach(b => b.onclick = () => {
       capturePage();
       project.activePage = b.dataset.openPage;
       canvas.innerHTML = project.pages[project.activePage] || '';
@@ -183,7 +183,7 @@
       }
       renderAssetsPanel(); scheduleSave(); notice('Assets updated');
     });
-    $('[data-asset]').forEach(b => b.onclick = () => {
+    $$('[data-asset]').forEach(b => b.onclick = () => {
       const asset = project.assets[Number(b.dataset.asset)];
       if (!asset) return;
       const node = document.createElement('section'); node.className = 'new-section canvas-node'; node.dataset.node = 'image'; node.tabIndex = 0;
@@ -240,10 +240,10 @@
   // Drag-and-drop reordering and basic container nesting.
   let draggedNode = null;
   const dragObserver = new MutationObserver(() => {
-    $('.canvas-node', canvas).forEach(n => { n.draggable = true; });
+    $$('.canvas-node', canvas).forEach(n => { n.draggable = true; });
   });
   dragObserver.observe(canvas, {childList:true, subtree:true});
-  $('.canvas-node', canvas).forEach(n => { n.draggable = true; });
+  $$('.canvas-node', canvas).forEach(n => { n.draggable = true; });
   canvas.addEventListener('dragstart', e => {
     const node = e.target.closest('.canvas-node');
     if (!node || !canvas.contains(node)) return;
@@ -255,14 +255,14 @@
   canvas.addEventListener('dragend', () => {
     draggedNode?.classList.remove('is-dragging');
     draggedNode = null;
-    $('.drop-target', canvas).forEach(n => n.classList.remove('drop-target'));
+    $$('.drop-target', canvas).forEach(n => n.classList.remove('drop-target'));
   });
   canvas.addEventListener('dragover', e => {
     if (!draggedNode) return;
     const target = e.target.closest('.canvas-node');
     if (target && target !== draggedNode && !draggedNode.contains(target)) {
       e.preventDefault();
-      $('.drop-target', canvas).forEach(n => n.classList.remove('drop-target'));
+      $$('.drop-target', canvas).forEach(n => n.classList.remove('drop-target'));
       target.classList.add('drop-target');
       if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
     }
@@ -278,7 +278,7 @@
     } else {
       target.parentNode.insertBefore(draggedNode, target);
     }
-    $('.drop-target', canvas).forEach(n => n.classList.remove('drop-target'));
+    $$('.drop-target', canvas).forEach(n => n.classList.remove('drop-target'));
     draggedNode.classList.remove('is-dragging');
     select(draggedNode); snapshot(); scheduleSave(); notice('Element moved');
   });
@@ -291,9 +291,9 @@
   canvas.addEventListener('input', e => { if (e.target.matches('[contenteditable="true"]')) scheduleSave(); });
   canvas.addEventListener('blur', e => { if (e.target.matches('[contenteditable="true"]')) { originalSnapshot(); scheduleSave(); } }, true);
   // Keep panel navigation functional rather than showing placeholder messages.
-  $('.rail-tool').forEach(b => {
-    if (b.dataset.panel === 'pages') b.onclick = () => { $('.rail-tool').forEach(x => x.classList.toggle('selected', x === b)); left.classList.remove('collapsed'); renderPagesPanel(); };
-    if (b.dataset.panel === 'assets') b.onclick = () => { $('.rail-tool').forEach(x => x.classList.toggle('selected', x === b)); left.classList.remove('collapsed'); renderAssetsPanel(); };
+  $$('.rail-tool').forEach(b => {
+    if (b.dataset.panel === 'pages') b.onclick = () => { $$('.rail-tool').forEach(x => x.classList.toggle('selected', x === b)); left.classList.remove('collapsed'); renderPagesPanel(); };
+    if (b.dataset.panel === 'assets') b.onclick = () => { $$('.rail-tool').forEach(x => x.classList.toggle('selected', x === b)); left.classList.remove('collapsed'); renderAssetsPanel(); };
   });
   document.addEventListener('keydown', e => {
     const editing = e.target.matches('input,textarea,select,[contenteditable="true"]');
@@ -335,14 +335,14 @@
       project.classes[name] = project.classes[name] || {};
       bindNodes(); snapshot(); scheduleSave(); renderClassesPanel(); notice('Class applied');
     });
-    $('[data-use-class]').forEach(b => b.onclick = () => {
+    $$('[data-use-class]').forEach(b => b.onclick = () => {
       if (!selected) return notice('Select an element first');
       selected.classList.add(b.dataset.useClass); snapshot(); scheduleSave(); notice('Class applied');
     });
-    $('[data-delete-class]').forEach(b => b.onclick = () => {
+    $$('[data-delete-class]').forEach(b => b.onclick = () => {
       const name = b.dataset.deleteClass;
       if (!confirm('Remove class "' + name + '" from this project?')) return;
-      $('.' + CSS.escape(name), canvas).forEach(n => n.classList.remove(name));
+      $$('.' + CSS.escape(name), canvas).forEach(n => n.classList.remove(name));
       delete project.classes[name]; snapshot(); scheduleSave(); renderClassesPanel();
     });
   }
@@ -357,7 +357,7 @@
       if (project.collections[name]) return notice('That collection already exists');
       project.collections[name] = []; scheduleSave(); renderCmsPanel(); notice('Collection created');
     });
-    $('[data-add-cms-item]').forEach(b => b.onclick = () => {
+    $$('[data-add-cms-item]').forEach(b => b.onclick = () => {
       const name = b.dataset.addCmsItem;
       const title = prompt('Item title:');
       if (!title?.trim()) return;
@@ -365,7 +365,7 @@
       project.collections[name].push({title:title.trim().slice(0,160),body:body.slice(0,10000)});
       scheduleSave(); renderCmsPanel(); notice('CMS item added');
     });
-    $('[data-edit-cms]').forEach(b => b.onclick = () => {
+    $$('[data-edit-cms]').forEach(b => b.onclick = () => {
       const row = project.collections[b.dataset.editCms][Number(b.dataset.row)];
       if (!row) return;
       const title = prompt('Item title:', row.title || '');
@@ -389,7 +389,7 @@
       project.interactions.push({id:selected.id,event,action,value:value.slice(0,500)});
       scheduleSave(); snapshot(); renderInteractionsPanel(); notice('Interaction added');
     });
-    $('[data-remove-interaction]').forEach(b => b.onclick = () => { project.interactions.splice(Number(b.dataset.removeInteraction),1); scheduleSave(); renderInteractionsPanel(); });
+    $$('[data-remove-interaction]').forEach(b => b.onclick = () => { project.interactions.splice(Number(b.dataset.removeInteraction),1); scheduleSave(); renderInteractionsPanel(); });
   }
   function renderCodePanel() {
     panelShell('Custom code', 'CSS and JavaScript export snippets',
@@ -416,11 +416,11 @@
   const baseBindNodes = bindNodes;
   bindNodes = function() { baseBindNodes(); applyInteractionRules(); };
   // New workspace tools. The CMS is explicitly local until a server backend is configured.
-  $('.rail-tool').forEach(b => {
-    if (b.dataset.panel === 'classes') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderClassesPanel(); };
-    if (b.dataset.panel === 'cms') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCmsPanel(); };
-    if (b.dataset.panel === 'interactions') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderInteractionsPanel(); };
-    if (b.dataset.panel === 'code') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCodePanel(); };
+  $$('.rail-tool').forEach(b => {
+    if (b.dataset.panel === 'classes') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderClassesPanel(); };
+    if (b.dataset.panel === 'cms') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCmsPanel(); };
+    if (b.dataset.panel === 'interactions') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderInteractionsPanel(); };
+    if (b.dataset.panel === 'code') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCodePanel(); };
   });
   const baseDownloadCurrentPage = downloadCurrentPage;
   downloadCurrentPage = function() {
