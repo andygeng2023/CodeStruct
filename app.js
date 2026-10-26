@@ -217,27 +217,34 @@
     $('#codeDialog').showModal();
   }
 
-  function downloadCurrentPage() {
+  function getExportHTML() {
     const clone = canvas.cloneNode(true);
     clone.querySelectorAll('.selected').forEach(n => n.classList.remove('selected'));
     clone.querySelectorAll('[contenteditable]').forEach(n => n.removeAttribute('contenteditable'));
     clone.querySelectorAll('.canvas-node').forEach(n => n.removeAttribute('tabindex'));
+    clone.querySelectorAll('[draggable]').forEach(n => n.removeAttribute('draggable'));
+    clone.querySelectorAll('.drop-target,.is-dragging').forEach(n => n.classList.remove('drop-target','is-dragging'));
     let css = '';
     for (const sheet of [...document.styleSheets]) {
-      try { css += [...sheet.cssRules].map(rule => rule.cssText).join('\n') + '\n'; } catch {}
+      try { css += [...sheet.cssRules].map(rule => rule.cssText).join('\\n') + '\\n'; } catch {}
     }
-    const html = '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
-      esc(project.activePage || 'Website') + '</title><style>' + css.replace(/<\/style/gi, '<\\/style') +
-      '</style></head><body>' + clone.outerHTML + '</body></html>';
+    css += '\\n' + Object.entries(project.classes || {}).map(([name,props]) => {
+      const declarations = Object.entries(props || {}).filter(([k,v]) => ['color','backgroundColor','padding','fontSize','borderRadius'].includes(k) && typeof v === 'string' && /^[#a-zA-Z0-9.%() ,/-]+$/.test(v)).map(([k,v]) => k.replace(/[A-Z]/g,c=>'-'+c.toLowerCase())+':'+v).join(';');
+      return /^[a-zA-Z_][\\w-]*$/.test(name) && declarations ? '.'+CSS.escape(name)+'{'+declarations+'}' : '';
+    }).join('\\n') + '\\n' + (project.customCode?.css || '');
+    const title = esc(project.activePage || 'Website');
+    return '<!doctype html>\\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title><style>' + css.replace(/<\\/style/gi, '<\\\\/style') + '</style></head><body>' + clone.outerHTML + '</body></html>';
+  }
+  function downloadCurrentPage() {
+    const html = getExportHTML();
     const blob = new Blob([html], {type:'text/html;charset=utf-8'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const filename = (project.activePage || 'website').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'website';
+    const filename = (project.activePage || 'website').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'website';
     a.href = url; a.download = filename + '.html'; document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    notice('Downloaded a self-contained HTML file for this page. Hosting is not configured.');
+    notice('Downloaded a self-contained HTML file for this page.');
   }
-
 
   // Drag-and-drop reordering and basic container nesting.
   let draggedNode = null;
@@ -565,6 +572,7 @@
 
   window.CodeStructEditor = {
     getProject() { capturePage(); return JSON.parse(JSON.stringify(project)); },
+    getExportHTML() { capturePage(); return getExportHTML(); },
     getCloudProjectId() { return project.cloudProjectId || null; },
     setCloudProjectId(id) { project.cloudProjectId = id || null; saveProject(); },
     loadCloudDocument(doc, id) {
