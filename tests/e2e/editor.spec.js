@@ -69,3 +69,30 @@ test('binds a selected container to a dynamic CMS collection', async ({ page }) 
   await page.locator('#bindCmsList').click();
   await expect(page.locator('#siteCanvas [data-cms-list="Blog posts"]')).toHaveCount(1);
 });
+
+test('reorders canvas elements with drag and drop', async ({ page }) => {
+  await page.locator('[data-add="Section"]').click();
+  await page.locator('[data-add="Container"]').click();
+  const roots = page.locator('#siteCanvas > .canvas-node');
+  const count = await roots.count();
+  const section = roots.nth(count - 2);
+  const container = roots.nth(count - 1);
+  await expect(section).toHaveAttribute('data-node', 'section');
+  await expect(container).toHaveAttribute('data-node', 'container');
+  await container.dragTo(section);
+  await expect(roots.nth(count - 2)).toHaveAttribute('data-node', 'container');
+  await expect(roots.nth(count - 1)).toHaveAttribute('data-node', 'section');
+});
+
+test('saves SEO metadata into exported HTML and runs the accessibility audit', async ({ page }) => {
+  await page.locator('[data-add="Heading"]').click();
+  await page.locator('[data-panel="settings"]').click();
+  await page.locator('#seoTitle').fill('Browser-tested page title');
+  await page.locator('#seoDescription').fill('A descriptive page summary.');
+  await page.locator('#saveSiteSeo').click();
+  await page.locator('#runAccessibilityAudit').click();
+  await expect(page.locator('#accessibilityResults')).not.toBeEmpty();
+  const exported = await page.evaluate(() => window.CodeStructEditor.getExportHTML());
+  expect(exported).toContain('<title>Browser-tested page title</title>');
+  expect(exported).toContain('name="description" content="A descriptive page summary."');
+});
