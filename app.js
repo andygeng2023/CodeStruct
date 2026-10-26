@@ -310,5 +310,140 @@
   renderItems();
   saveProject();
 
+
+  // Local class library, CMS collections, interaction rules and custom-code workspace.
+  project.classes = project.classes || {};
+  project.collections = project.collections || {};
+  project.interactions = project.interactions || [];
+  project.customCode = project.customCode || { css: '', js: '' };
+  function panelShell(title, subtitle, body) {
+    $('#panelTitle').textContent = title;
+    $('#panelSubtitle').textContent = subtitle;
+    $('#panelContent').hidden = false;
+    $('#panelContent').innerHTML = body;
+  }
+  function renderClassesPanel() {
+    panelShell('Style classes', 'Reusable CSS class names',
+      '<div class="page-list"><label class="field-label">Class name</label><input id="classNameInput" class="full-input" placeholder="e.g. hero-title"><button id="applyClass" class="button primary full-button">Apply to selected element</button><div class="panel-divider"></div><strong class="panel-small-heading">Saved classes</strong>' +
+      Object.keys(project.classes).map(c => '<div class="class-row"><button data-use-class="' + esc(c) + '">.' + esc(c) + '</button><button data-delete-class="' + esc(c) + '" aria-label="Delete class">×</button></div>').join('') +
+      '<p class="hint">Classes are saved in this browser project. Shared class rules are applied to elements with that class.</p></div>');
+    $('#applyClass')?.addEventListener('click', () => {
+      if (!selected) return notice('Select an element first');
+      const name = ($('#classNameInput').value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '-').replace(/^-+/, '');
+      if (!name) return notice('Enter a class name');
+      selected.classList.add(name);
+      project.classes[name] = project.classes[name] || {};
+      bindNodes(); snapshot(); scheduleSave(); renderClassesPanel(); notice('Class applied');
+    });
+    $('[data-use-class]').forEach(b => b.onclick = () => {
+      if (!selected) return notice('Select an element first');
+      selected.classList.add(b.dataset.useClass); snapshot(); scheduleSave(); notice('Class applied');
+    });
+    $('[data-delete-class]').forEach(b => b.onclick = () => {
+      const name = b.dataset.deleteClass;
+      if (!confirm('Remove class "' + name + '" from this project?')) return;
+      $('.' + CSS.escape(name), canvas).forEach(n => n.classList.remove(name));
+      delete project.classes[name]; snapshot(); scheduleSave(); renderClassesPanel();
+    });
+  }
+  function renderCmsPanel() {
+    panelShell('CMS collections', 'Local structured content',
+      '<div class="page-list"><label class="field-label">Collection name</label><input id="collectionName" class="full-input" placeholder="Blog posts"><button id="createCollection" class="button primary full-button">Create collection</button><div class="panel-divider"></div>' +
+      Object.entries(project.collections).map(([name, rows]) => '<section class="cms-collection"><strong>' + esc(name) + '</strong><span class="hint">' + rows.length + ' items</span><button data-add-cms-item="' + esc(name) + '" class="button secondary full-button">＋ Add item</button>' + rows.map((row,i) => '<button class="cms-row" data-edit-cms="' + esc(name) + '" data-row="' + i + '">' + esc(row.title || row.name || ('Item ' + (i+1))) + '</button>').join('') + '</section>').join('') +
+      '<p class="hint">CMS data is local to this browser. It is not a cloud database and is not available to other visitors.</p></div>');
+    $('#createCollection')?.addEventListener('click', () => {
+      const name = ($('#collectionName').value || '').trim().slice(0, 60);
+      if (!name) return notice('Enter a collection name');
+      if (project.collections[name]) return notice('That collection already exists');
+      project.collections[name] = []; scheduleSave(); renderCmsPanel(); notice('Collection created');
+    });
+    $('[data-add-cms-item]').forEach(b => b.onclick = () => {
+      const name = b.dataset.addCmsItem;
+      const title = prompt('Item title:');
+      if (!title?.trim()) return;
+      const body = prompt('Item content (optional):', '') || '';
+      project.collections[name].push({title:title.trim().slice(0,160),body:body.slice(0,10000)});
+      scheduleSave(); renderCmsPanel(); notice('CMS item added');
+    });
+    $('[data-edit-cms]').forEach(b => b.onclick = () => {
+      const row = project.collections[b.dataset.editCms][Number(b.dataset.row)];
+      if (!row) return;
+      const title = prompt('Item title:', row.title || '');
+      if (!title?.trim()) return;
+      row.title = title.trim().slice(0,160);
+      row.body = (prompt('Item content:', row.body || '') || '').slice(0,10000);
+      scheduleSave(); renderCmsPanel();
+    });
+  }
+  function renderInteractionsPanel() {
+    panelShell('Interactions', 'Configure basic click and hover actions',
+      '<div class="page-list"><p class="hint">Choose an element on the canvas first, then add a simple event rule.</p><label class="field-label">Event</label><select id="interactionEvent" class="full-input"><option value="click">Click</option><option value="mouseenter">Mouse enter</option><option value="mouseleave">Mouse leave</option></select><label class="field-label">Action</label><select id="interactionAction" class="full-input"><option value="navigate">Navigate to URL</option><option value="toggle-class">Toggle CSS class</option><option value="show-message">Show message</option></select><label class="field-label">Value (URL, class name, or message)</label><input id="interactionValue" class="full-input" placeholder="https://example.com"><button id="addInteraction" class="button primary full-button">Add interaction</button><div class="panel-divider"></div>' +
+      project.interactions.map((it,i) => '<div class="interaction-row"><span>' + esc(it.event) + ' → ' + esc(it.action) + '</span><small>' + esc(it.value) + '</small><button data-remove-interaction="' + i + '">×</button></div>').join('') +
+      '<p class="hint">Rules are bound to an element ID. Only safe navigation URLs are allowed; custom JavaScript is not executed in the editor.</p></div>');
+    $('#addInteraction')?.addEventListener('click', () => {
+      if (!selected) return notice('Select an element first');
+      if (!selected.id) selected.id = 'cs-' + Math.random().toString(36).slice(2,9);
+      const event = $('#interactionEvent').value, action = $('#interactionAction').value, value = $('#interactionValue').value.trim();
+      if (!value) return notice('Enter an action value');
+      if (action === 'navigate' && !/^(https?:\/\/|\/|#|mailto:)/i.test(value)) return notice('Use an http(s), relative, anchor, or mailto URL');
+      project.interactions.push({id:selected.id,event,action,value:value.slice(0,500)});
+      scheduleSave(); snapshot(); renderInteractionsPanel(); notice('Interaction added');
+    });
+    $('[data-remove-interaction]').forEach(b => b.onclick = () => { project.interactions.splice(Number(b.dataset.removeInteraction),1); scheduleSave(); renderInteractionsPanel(); });
+  }
+  function renderCodePanel() {
+    panelShell('Custom code', 'CSS and JavaScript export snippets',
+      '<div class="page-list"><label class="field-label">Custom CSS</label><textarea id="customCss" class="code-editor" spellcheck="false" placeholder=".my-class { color: rebeccapurple; }">' + esc(project.customCode.css || '') + '</textarea><label class="field-label">Custom JavaScript</label><textarea id="customJs" class="code-editor" spellcheck="false" placeholder="/* Exported with your site; not run in the editor */">' + esc(project.customCode.js || '') + '</textarea><button id="saveCustomCode" class="button primary full-button">Save code</button><p class="hint">Custom JavaScript is not executed inside the editor. Review and test exported code before publishing.</p></div>');
+    $('#saveCustomCode')?.addEventListener('click', () => {
+      project.customCode = {css:$('#customCss').value.slice(0,50000),js:$('#customJs').value.slice(0,50000)};
+      scheduleSave(); notice('Custom code saved');
+    });
+  }
+  function applyInteractionRules() {
+    project.interactions.forEach(rule => {
+      const node = document.getElementById(rule.id);
+      if (!node || node.dataset['interactionBound' + rule.event + rule.action]) return;
+      node.dataset['interactionBound' + rule.event + rule.action] = 'true';
+      node.addEventListener(rule.event, e => {
+        if (rule.action === 'navigate') {
+          if (/^(https?:\/\/|\/|#|mailto:)/i.test(rule.value)) window.location.href = rule.value;
+        } else if (rule.action === 'toggle-class') {
+          if (/^[a-zA-Z_][\w-]*$/.test(rule.value)) node.classList.toggle(rule.value);
+        } else if (rule.action === 'show-message') notice(rule.value);
+      });
+    });
+  }
+  const baseBindNodes = bindNodes;
+  bindNodes = function() { baseBindNodes(); applyInteractionRules(); };
+  // New workspace tools. The CMS is explicitly local until a server backend is configured.
+  $('.rail-tool').forEach(b => {
+    if (b.dataset.panel === 'classes') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderClassesPanel(); };
+    if (b.dataset.panel === 'cms') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCmsPanel(); };
+    if (b.dataset.panel === 'interactions') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderInteractionsPanel(); };
+    if (b.dataset.panel === 'code') b.onclick = () => { $('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCodePanel(); };
+  });
+  const baseDownloadCurrentPage = downloadCurrentPage;
+  downloadCurrentPage = function() {
+    const clone = canvas.cloneNode(true);
+    clone.querySelectorAll('.selected').forEach(n=>n.classList.remove('selected'));
+    clone.querySelectorAll('[contenteditable]').forEach(n=>n.removeAttribute('contenteditable'));
+    clone.querySelectorAll('.canvas-node').forEach(n=>n.removeAttribute('tabindex'));
+    let css = '';
+    for (const sheet of [...document.styleSheets]) { try { css += [...sheet.cssRules].map(rule=>rule.cssText).join('\n')+'\n'; } catch {} }
+    css += '\n' + (project.customCode?.css || '');
+    let interactionScript = '';
+    if (project.interactions?.length) {
+      const rules = JSON.stringify(project.interactions).replace(/</g,'\\u003c');
+      interactionScript = '<script>(function(){const rules=' + rules + ';rules.forEach(r=>{const n=document.getElementById(r.id);if(!n)return;n.addEventListener(r.event,()=>{if(r.action==="navigate"){if(/^(https?:\\/\\/|\\/|#|mailto:)/i.test(r.value))location.href=r.value;}else if(r.action==="toggle-class"){if(/^[a-zA-Z_][\\w-]*$/.test(r.value))n.classList.toggle(r.value);}else if(r.action==="show-message")alert(r.value);});});})();<\\/script>';
+    }
+    const customJs = project.customCode?.js ? '<script>' + project.customCode.js.replace(/<\/script/gi,'<\\/script') + '<\\/script>' : '';
+    const title = esc(project.activePage || 'Website');
+    const html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title><style>' + css.replace(/<\/style/gi,'<\\/style') + '</style></head><body>' + clone.outerHTML + interactionScript + customJs + '</body></html>';
+    const blob = new Blob([html],{type:'text/html;charset=utf-8'}), url=URL.createObjectURL(blob), link=document.createElement('a');
+    link.href=url; link.download=(project.activePage||'website').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.html';
+    document.body.append(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    notice('Downloaded current page HTML. Hosting and multi-page packaging still require deployment setup.');
+  };
+
   bindNodes(); renderItems(); snapshot(); snapshotStatus();
 })();
