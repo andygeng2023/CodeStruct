@@ -394,7 +394,7 @@
   project.components = project.components || {};
   function renderComponentsPanel() {
     const rows = Object.entries(project.components);
-    panelShell('Components', 'Linked components update every instance',
+    panelShell('Components', 'Edit any linked instance; changes propagate across pages',
       '<div class="page-list"><label class="field-label">Component name</label><input id="componentName" class="full-input" placeholder="Hero, testimonial, CTA"><button id="saveComponent" class="button primary full-button">Link selected element</button><div class="panel-divider"></div>' +
       rows.map(([name,component]) => '<section class="cms-collection"><strong>' + esc(name) + '</strong><span class="hint">' + (component.instances || []).length + ' linked instance(s)</span><button data-refresh-component="' + esc(name) + '" class="button secondary full-button">Update all instances from selected</button><button data-insert-component="' + esc(name) + '" class="button secondary full-button">Insert linked instance</button><button data-delete-component="' + esc(name) + '" class="button secondary full-button">Unlink component</button></section>').join('') +
       '<p class="hint">Select a linked instance and update it to propagate its markup to all linked copies. Component links are project-wide across pages.</p></div>');
@@ -464,6 +464,40 @@
       canvas.innerHTML = project.pages[project.activePage] || ''; bindNodes(); snapshot(); scheduleSave(); renderComponentsPanel();
     });
   }
+  let syncingLinkedComponent = false;
+  const linkedComponentObserver = new MutationObserver(mutations => {
+    if (syncingLinkedComponent || !selected?.dataset.componentId) return;
+    if (!mutations.some(mutation => selected === mutation.target || selected.contains(mutation.target))) return;
+    const component = Object.values(project.components || {}).find(item => item && typeof item === 'object' && item.id === selected.dataset.componentId);
+    if (!component) return;
+    syncingLinkedComponent = true;
+    try {
+      const source = selected.cloneNode(true);
+      source.classList.remove('selected');
+      component.html = source.outerHTML;
+      $$('.canvas-node[data-component-id="' + CSS.escape(component.id) + '"]', canvas).forEach(node => {
+        if (node === selected) return;
+        const temp = document.createElement('template'); temp.innerHTML = component.html;
+        const fresh = temp.content.firstElementChild;
+        if (fresh) node.replaceWith(fresh);
+      });
+      for (const pageName of pageNames()) {
+        if (pageName === project.activePage) continue;
+        const temp = document.createElement('template'); temp.innerHTML = project.pages[pageName] || '';
+        temp.content.querySelectorAll('[data-component-id="' + CSS.escape(component.id) + '"]').forEach(node => {
+          const copy = document.createElement('template'); copy.innerHTML = component.html;
+          const fresh = copy.content.firstElementChild;
+          if (fresh) node.replaceWith(fresh);
+        });
+        project.pages[pageName] = temp.innerHTML;
+      }
+      capturePage();
+      scheduleSave();
+    } finally {
+      syncingLinkedComponent = false;
+    }
+  });
+  linkedComponentObserver.observe(canvas, {subtree:true,childList:true,characterData:true,attributes:true});
   $('.rail-tool').forEach(b => {
     if (b.dataset.panel === 'components') b.onclick = () => {
       $('.rail-tool').forEach(x => x.classList.toggle('selected', x === b));
