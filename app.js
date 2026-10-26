@@ -762,7 +762,7 @@
       project.cloudProjectId = id || project.cloudProjectId || null;
       project.activePage = project.pages[project.activePage] ? project.activePage : (Object.keys(project.pages)[0] || 'Home');
       canvas.innerHTML = project.pages[project.activePage] || '';
-      selected = null; bindNodes(); inspector(); updatePageLabel(); renderItems(); snapshot(); saveProject();
+      selected = null; ensureNodeKeys(); bindNodes(); inspector(); updatePageLabel(); renderItems(); snapshot(); saveProject();
     },
     refresh() { bindNodes(); renderItems(); saveProject(); }
   };
