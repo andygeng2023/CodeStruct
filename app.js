@@ -385,29 +385,69 @@
 
   project.components = project.components || {};
   function renderComponentsPanel() {
-    panelShell('Components', 'Save and reuse element blocks',
-      '<div class="page-list"><label class="field-label">Component name</label><input id="componentName" class="full-input" placeholder="Hero, testimonial, CTA"><button id="saveComponent" class="button primary full-button">Save selected element</button><div class="panel-divider"></div>' +
-      Object.keys(project.components).map(name => '<div class="component-row"><strong>' + esc(name) + '</strong><button data-insert-component="' + esc(name) + '">Insert</button><button data-delete-component="' + esc(name) + '">Delete</button></div>').join('') +
-      '<p class="hint">Reusable snapshots are stored locally. Instances are independent copies, not linked symbols.</p></div>');
+    const rows = Object.entries(project.components);
+    panelShell('Components', 'Linked components update every instance',
+      '<div class="page-list"><label class="field-label">Component name</label><input id="componentName" class="full-input" placeholder="Hero, testimonial, CTA"><button id="saveComponent" class="button primary full-button">Link selected element</button><div class="panel-divider"></div>' +
+      rows.map(([name,component]) => '<section class="cms-collection"><strong>' + esc(name) + '</strong><span class="hint">' + (component.instances || []).length + ' linked instance(s)</span><button data-refresh-component="' + esc(name) + '" class="button secondary full-button">Update all instances from selected</button><button data-insert-component="' + esc(name) + '" class="button secondary full-button">Insert linked instance</button><button data-delete-component="' + esc(name) + '" class="button secondary full-button">Unlink component</button></section>').join('') +
+      '<p class="hint">Select a linked instance and update it to propagate its markup to all linked copies. Component links are project-wide across pages.</p></div>');
     $('#saveComponent')?.addEventListener('click', () => {
       if (!selected) return notice('Select an element first');
       const name = ($('#componentName').value || '').trim().slice(0,80);
       if (!name) return notice('Enter a component name');
-      project.components[name] = selected.outerHTML;
-      scheduleSave(); renderComponentsPanel(); notice('Component saved');
+      const id = project.components[name]?.id || 'component-' + Math.random().toString(36).slice(2,11);
+      selected.dataset.componentId = id;
+      project.components[name] = { id, html: selected.outerHTML, instances: [] };
+      capturePage();
+      for (const pageName of pageNames()) {
+        const template = document.createElement('template'); template.innerHTML = project.pages[pageName] || '';
+        template.content.querySelectorAll('[data-component-id="' + CSS.escape(id) + '"]').forEach(node => {
+          if (node !== selected) node.dataset.componentId = id;
+        });
+        project.pages[pageName] = template.innerHTML;
+      }
+      scheduleSave(); renderComponentsPanel(); notice('Linked component created');
     });
-    $('[data-insert-component]').forEach(b => b.onclick = () => {
-      const template = document.createElement('template');
-      template.innerHTML = project.components[b.dataset.insertComponent] || '';
+    $$('[data-refresh-component]').forEach(button => button.onclick = () => {
+      const name = button.dataset.refreshComponent, component = project.components[name];
+      if (!selected || !component) return notice('Select the updated component instance first');
+      if (selected.dataset.componentId !== component.id) return notice('Select an instance of this component');
+      const source = selected.cloneNode(true);
+      source.dataset.componentId = component.id;
+      component.html = source.outerHTML;
+      for (const pageName of pageNames()) {
+        const template = document.createElement('template'); template.innerHTML = project.pages[pageName] || '';
+        template.content.querySelectorAll('[data-component-id="' + CSS.escape(component.id) + '"]').forEach(node => {
+          if (node === selected && pageName === project.activePage) return;
+          const replacement = document.createElement('template'); replacement.innerHTML = component.html;
+          const fresh = replacement.content.firstElementChild;
+          if (fresh) node.replaceWith(fresh);
+        });
+        project.pages[pageName] = template.innerHTML;
+      }
+      capturePage(); bindNodes(); select(selected); snapshot(); scheduleSave(); renderComponentsPanel(); notice('Linked instances updated');
+    });
+    $$('[data-insert-component]').forEach(button => button.onclick = () => {
+      const component = project.components[button.dataset.insertComponent];
+      if (!component) return;
+      const template = document.createElement('template'); template.innerHTML = component.html || '';
       const node = template.content.firstElementChild;
-      if (!node) return notice('Component could not be loaded');
-      node.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
-      node.removeAttribute('id'); node.classList.remove('selected');
+      if (!node) return notice('Component template is empty');
+      node.dataset.componentId = component.id;
+      node.classList.remove('selected'); node.querySelectorAll('[id]').forEach(n => n.removeAttribute('id')); node.removeAttribute('id');
       canvas.insertBefore(node, selected?.parentElement === canvas ? selected.nextSibling : null);
-      bindNodes(); select(node); snapshot(); scheduleSave(); notice('Component inserted');
+      bindNodes(); select(node); snapshot(); scheduleSave(); renderComponentsPanel();
     });
-    $('[data-delete-component]').forEach(b => b.onclick = () => {
-      delete project.components[b.dataset.deleteComponent]; scheduleSave(); renderComponentsPanel();
+    $$('[data-delete-component]').forEach(button => button.onclick = () => {
+      const component = project.components[button.dataset.deleteComponent];
+      if (!component) return;
+      if (!confirm('Unlink this component? Existing instances will remain as ordinary elements.')) return;
+      for (const pageName of pageNames()) {
+        const template = document.createElement('template'); template.innerHTML = project.pages[pageName] || '';
+        template.content.querySelectorAll('[data-component-id="' + CSS.escape(component.id) + '"]').forEach(node => delete node.dataset.componentId);
+        project.pages[pageName] = template.innerHTML;
+      }
+      delete project.components[button.dataset.deleteComponent];
+      canvas.innerHTML = project.pages[project.activePage] || ''; bindNodes(); snapshot(); scheduleSave(); renderComponentsPanel();
     });
   }
   $('.rail-tool').forEach(b => {
