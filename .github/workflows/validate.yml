@@ -16,3 +16,6 @@ jobs:
       - run: node --check cloud.js
       - run: node --check cloud-assets.js
       - run: node tests/smoke.test.js
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
