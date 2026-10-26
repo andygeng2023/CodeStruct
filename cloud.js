@@ -129,7 +129,7 @@ async function saveCloudProject(publish) {
       updated_at: new Date().toISOString()
     };
     if (publish) {
-      row.published_document = doc;
+      row.published_document = { ...doc, html: editor().getExportHTML(), published_at: new Date().toISOString() };
       row.is_published = true;
       row.published_at = new Date().toISOString();
     }
