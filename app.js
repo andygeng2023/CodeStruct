@@ -521,9 +521,17 @@
   }
   function renderCmsPanel() {
     panelShell('CMS collections', 'Local structured content',
-      '<div class="page-list"><label class="field-label">Collection name</label><input id="collectionName" class="full-input" placeholder="Blog posts"><button id="createCollection" class="button primary full-button">Create collection</button><div class="panel-divider"></div>' +
+      '<div class="page-list"><label class="field-label">Collection name</label><input id="collectionName" class="full-input" placeholder="Blog posts"><button id="createCollection" class="button primary full-button">Create collection</button><button id="syncCmsCloud" class="button secondary full-button">Sync CMS to cloud</button><label class="field-label">Bind selected container to collection</label><select id="bindCmsCollection" class="full-input"><option value="">Choose collection</option>' + Object.keys(project.collections).map(name => '<option value="' + esc(name) + '">' + esc(name) + '</option>').join('') + '</select><button id="bindCmsList" class="button secondary full-button">Render dynamic collection list here</button><p class="hint">Cloud CMS data is published dynamically. Bind a container to a collection to render published items on your site.</p><div class="panel-divider"></div>' +
       Object.entries(project.collections).map(([name, rows]) => '<section class="cms-collection"><strong>' + esc(name) + '</strong><span class="hint">' + rows.length + ' items</span><button data-add-cms-item="' + esc(name) + '" class="button secondary full-button">＋ Add item</button>' + rows.map((row,i) => '<button class="cms-row" data-edit-cms="' + esc(name) + '" data-row="' + i + '">' + esc(row.title || row.name || ('Item ' + (i+1))) + '</button>').join('') + '</section>').join('') +
       '<p class="hint">CMS data is local to this browser. It is not a cloud database and is not available to other visitors.</p></div>');
+    $('#bindCmsList')?.addEventListener('click', () => {
+      if (!selected) return notice('Select a container element first');
+      const collection = $('#bindCmsCollection').value;
+      if (!collection) return notice('Choose a collection');
+      selected.dataset.cmsList = collection;
+      selected.innerHTML = '<div class="cms-live-placeholder">Dynamic collection: ' + esc(collection) + '</div>';
+      scheduleSave(); snapshot(); notice('Dynamic collection binding added');
+    });
     $('#createCollection')?.addEventListener('click', () => {
       const name = ($('#collectionName').value || '').trim().slice(0, 60);
       if (!name) return notice('Enter a collection name');
