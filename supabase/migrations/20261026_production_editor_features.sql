@@ -123,3 +123,62 @@ begin
 end $$;
 revoke all on function public.sytely_submit_form(uuid,jsonb,text) from public,anon,authenticated;
 grant execute on function public.sytely_submit_form(uuid,jsonb,text) to service_role;
+
+-- Shared editing roles and owner-managed invitations.
+create table if not exists public.sytely_project_members (
+  project_id uuid not null references public.sytely_projects(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  email text not null check (char_length(email) between 3 and 320),
+  role text not null default 'editor' check (role in ('editor','viewer')),
+  invited_at timestamptz not null default now(),
+  accepted_at timestamptz,
+  primary key(project_id,user_id)
+);
+create index if not exists sytely_project_members_user_idx on public.sytely_project_members(user_id,project_id);
+alter table public.sytely_project_members enable row level security;
+drop policy if exists "Owners can manage project members" on public.sytely_project_members;
+create policy "Owners can manage project members" on public.sytely_project_members for all to authenticated
+using(exists(select 1 from public.sytely_projects p where p.id=project_id and p.owner_id=(select auth.uid())))
+with check(exists(select 1 from public.sytely_projects p where p.id=project_id and p.owner_id=(select auth.uid())));
+drop policy if exists "Members can read their own membership" on public.sytely_project_members;
+create policy "Members can read their own membership" on public.sytely_project_members for select to authenticated using(user_id=(select auth.uid()));
+
+drop policy if exists "Project members can read shared projects" on public.sytely_projects;
+create policy "Project members can read shared projects" on public.sytely_projects for select to authenticated
+using(exists(select 1 from public.sytely_project_members m where m.project_id=id and m.user_id=(select auth.uid())));
+drop policy if exists "Editors can update shared projects" on public.sytely_projects;
+create policy "Editors can update shared projects" on public.sytely_projects for update to authenticated
+using(exists(select 1 from public.sytely_project_members m where m.project_id=id and m.user_id=(select auth.uid()) and m.role='editor'))
+with check(owner_id<>(select auth.uid()) and exists(select 1 from public.sytely_project_members m where m.project_id=id and m.user_id=(select auth.uid()) and m.role='editor'));
+
+drop policy if exists "Members can read shared project versions" on public.sytely_project_versions;
+create policy "Members can read shared project versions" on public.sytely_project_versions for select to authenticated
+using(exists(select 1 from public.sytely_project_members m where m.project_id=project_id and m.user_id=(select auth.uid())));
+drop policy if exists "Editors can create shared project versions" on public.sytely_project_versions;
+create policy "Editors can create shared project versions" on public.sytely_project_versions for insert to authenticated
+with check(owner_id=(select auth.uid()) and exists(select 1 from public.sytely_project_members m where m.project_id=project_id and m.user_id=(select auth.uid()) and m.role='editor'));
+
+drop policy if exists "Project editors manage shared CMS items" on public.sytely_cms_items;
+create policy "Project editors manage shared CMS items" on public.sytely_cms_items for all to authenticated
+using(exists(select 1 from public.sytely_project_members m where m.project_id=project_id and m.user_id=(select auth.uid()) and m.role='editor'))
+with check(exists(select 1 from public.sytely_project_members m where m.project_id=project_id and m.user_id=(select auth.uid()) and m.role='editor'));
+
+create or replace function public.sytely_save_project_v2(p_project_id uuid,p_expected_revision bigint,p_document jsonb,p_name text,p_publish boolean default false,p_published_document jsonb default null)
+returns table(ok boolean,current_revision bigint)
+language plpgsql security invoker set search_path=public
+as $$
+declare v_user uuid:=auth.uid(); v_revision bigint;
+begin
+ if v_user is null then raise exception 'Authentication required' using errcode='42501'; end if;
+ if jsonb_typeof(p_document)<>'object' or char_length(p_name) not between 1 and 120 then raise exception 'Invalid project data' using errcode='22023'; end if;
+ if p_publish and (p_published_document is null or jsonb_typeof(p_published_document)<>'object') then raise exception 'Published snapshot is required' using errcode='22023'; end if;
+ if not exists(select 1 from public.sytely_projects p where p.id=p_project_id and (p.owner_id=v_user or exists(select 1 from public.sytely_project_members m where m.project_id=p.id and m.user_id=v_user and m.role='editor'))) then
+  raise exception 'Project not found or edit access denied' using errcode='42501';
+ end if;
+ select revision into v_revision from public.sytely_projects where id=p_project_id for update;
+ if v_revision<>p_expected_revision then return query select false,v_revision; return; end if;
+ update public.sytely_projects set document=p_document,name=p_name,revision=revision+1,updated_at=now(),is_published=case when p_publish then true else is_published end,published_document=case when p_publish then p_published_document else published_document end,published_at=case when p_publish then now() else published_at end where id=p_project_id returning revision into v_revision;
+ return query select true,v_revision;
+end $$;
+revoke all on function public.sytely_save_project_v2(uuid,bigint,jsonb,text,boolean,jsonb) from public,anon;
+grant execute on function public.sytely_save_project_v2(uuid,bigint,jsonb,text,boolean,jsonb) to authenticated;
