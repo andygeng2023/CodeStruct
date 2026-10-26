@@ -370,6 +370,41 @@
     };
   });
 
+
+  project.components = project.components || {};
+  function renderComponentsPanel() {
+    panelShell('Components', 'Save and reuse element blocks',
+      '<div class="page-list"><label class="field-label">Component name</label><input id="componentName" class="full-input" placeholder="Hero, testimonial, CTA"><button id="saveComponent" class="button primary full-button">Save selected element</button><div class="panel-divider"></div>' +
+      Object.keys(project.components).map(name => '<div class="component-row"><strong>' + esc(name) + '</strong><button data-insert-component="' + esc(name) + '">Insert</button><button data-delete-component="' + esc(name) + '">Delete</button></div>').join('') +
+      '<p class="hint">Reusable snapshots are stored locally. Instances are independent copies, not linked symbols.</p></div>');
+    $('#saveComponent')?.addEventListener('click', () => {
+      if (!selected) return notice('Select an element first');
+      const name = ($('#componentName').value || '').trim().slice(0,80);
+      if (!name) return notice('Enter a component name');
+      project.components[name] = selected.outerHTML;
+      scheduleSave(); renderComponentsPanel(); notice('Component saved');
+    });
+    $('[data-insert-component]').forEach(b => b.onclick = () => {
+      const template = document.createElement('template');
+      template.innerHTML = project.components[b.dataset.insertComponent] || '';
+      const node = template.content.firstElementChild;
+      if (!node) return notice('Component could not be loaded');
+      node.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+      node.removeAttribute('id'); node.classList.remove('selected');
+      canvas.insertBefore(node, selected?.parentElement === canvas ? selected.nextSibling : null);
+      bindNodes(); select(node); snapshot(); scheduleSave(); notice('Component inserted');
+    });
+    $('[data-delete-component]').forEach(b => b.onclick = () => {
+      delete project.components[b.dataset.deleteComponent]; scheduleSave(); renderComponentsPanel();
+    });
+  }
+  $('.rail-tool').forEach(b => {
+    if (b.dataset.panel === 'components') b.onclick = () => {
+      $('.rail-tool').forEach(x => x.classList.toggle('selected', x === b));
+      left.classList.remove('collapsed'); renderComponentsPanel();
+    };
+  });
+
   // Local class library, CMS collections, interaction rules and custom-code workspace.
   project.classes = project.classes || {};
   project.collections = project.collections || {};
