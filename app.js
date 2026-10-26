@@ -416,9 +416,23 @@
     $('#panelContent').hidden = false;
     $('#panelContent').innerHTML = body;
   }
+
+  function applyClassRules() {
+    let styleTag = document.getElementById('classLibraryStyles');
+    if (!styleTag) { styleTag = document.createElement('style'); styleTag.id = 'classLibraryStyles'; document.head.appendChild(styleTag); }
+    styleTag.textContent = Object.entries(project.classes || {}).map(([name, props]) => {
+      if (!/^[a-zA-Z_][\\w-]*$/.test(name) || !props || typeof props !== 'object') return '';
+      const declarations = Object.entries(props).filter(([prop,value]) =>
+        ['color','backgroundColor','padding','fontSize','borderRadius'].includes(prop) &&
+        typeof value === 'string' && value.length < 100 && /^[#a-zA-Z0-9.%() ,/-]+$/.test(value)
+      ).map(([prop,value]) => prop.replace(/[A-Z]/g, c => '-' + c.toLowerCase()) + ':' + value).join(';');
+      return declarations ? '.' + CSS.escape(name) + '{' + declarations + '}' : '';
+    }).join('\\n');
+  }
+
   function renderClassesPanel() {
     panelShell('Style classes', 'Reusable CSS class names',
-      '<div class="page-list"><label class="field-label">Class name</label><input id="classNameInput" class="full-input" placeholder="e.g. hero-title"><button id="applyClass" class="button primary full-button">Apply to selected element</button><div class="panel-divider"></div><strong class="panel-small-heading">Saved classes</strong>' +
+      '<div class="page-list"><label class="field-label">Class name</label><input id="classNameInput" class="full-input" placeholder="e.g. hero-title"><button id="applyClass" class="button primary full-button">Apply to selected element</button><div class="panel-divider"></div><strong class="panel-small-heading">Shared class styles</strong><label class="field-label">Text color</label><input id="classTextColor" type="color" value="#171815"><label class="field-label">Background</label><input id="classBgColor" type="color" value="#ffffff"><label class="field-label">Padding</label><input id="classPadding" class="full-input" value="16px"><label class="field-label">Font size</label><input id="classFontSize" class="full-input" value="16px"><label class="field-label">Border radius</label><input id="classRadius" class="full-input" value="0px"><button id="saveClassStyles" class="button secondary full-button">Save shared styles</button><div class="panel-divider"></div><strong class="panel-small-heading">Saved classes</strong>' +
       Object.keys(project.classes).map(c => '<div class="class-row"><button data-use-class="' + esc(c) + '">.' + esc(c) + '</button><button data-delete-class="' + esc(c) + '" aria-label="Delete class">×</button></div>').join('') +
       '<p class="hint">Classes are saved in this browser project. Shared class rules are applied to elements with that class.</p></div>');
     $('#applyClass')?.addEventListener('click', () => {
@@ -427,17 +441,26 @@
       if (!name) return notice('Enter a class name');
       selected.classList.add(name);
       project.classes[name] = project.classes[name] || {};
-      bindNodes(); snapshot(); scheduleSave(); renderClassesPanel(); notice('Class applied');
+      applyClassRules(); bindNodes(); snapshot(); scheduleSave(); renderClassesPanel(); notice('Class applied');
     });
     $$('[data-use-class]').forEach(b => b.onclick = () => {
       if (!selected) return notice('Select an element first');
       selected.classList.add(b.dataset.useClass); snapshot(); scheduleSave(); notice('Class applied');
     });
-    $$('[data-delete-class]').forEach(b => b.onclick = () => {
+    $('#saveClassStyles')?.addEventListener('click', () => {
+      const name = ($('#classNameInput').value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '-').replace(/^-+/, '');
+      if (!name) return notice('Enter a class name');
+      const padding = $('#classPadding').value.trim(), fontSize = $('#classFontSize').value.trim(), radius = $('#classRadius').value.trim();
+      const safeCss = v => /^[\\w.%() ,/-]+$/.test(v);
+      if (!safeCss(padding) || !safeCss(fontSize) || !safeCss(radius)) return notice('Use valid CSS lengths for spacing and type');
+      project.classes[name] = {color:$('#classTextColor').value,backgroundColor:$('#classBgColor').value,padding,fontSize,borderRadius:radius};
+      applyClassRules(); scheduleSave(); renderClassesPanel(); notice('Shared class styles saved');
+    });
+    $('[data-delete-class]').forEach(b => b.onclick = () => {
       const name = b.dataset.deleteClass;
       if (!confirm('Remove class "' + name + '" from this project?')) return;
       $$('.' + CSS.escape(name), canvas).forEach(n => n.classList.remove(name));
-      delete project.classes[name]; snapshot(); scheduleSave(); renderClassesPanel();
+      delete project.classes[name]; applyClassRules(); snapshot(); scheduleSave(); renderClassesPanel();
     });
   }
   function renderCmsPanel() {
