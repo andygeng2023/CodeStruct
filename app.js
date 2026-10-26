@@ -219,7 +219,7 @@
 
   function getExportHTML() {
     const restoreBreakpoint = activeBreakpoint;
-    if (restoreBreakpoint !== 'desktop') applyResponsiveBreakpoint('desktop');
+    if (restoreBreakpoint !== 'desktop') { skipLinkedSyncMutationBatch = true; applyResponsiveBreakpoint('desktop'); }
     const clone = canvas.cloneNode(true);
     clone.querySelectorAll('.selected').forEach(n => n.classList.remove('selected'));
     clone.querySelectorAll('[contenteditable]').forEach(n => n.removeAttribute('contenteditable'));
@@ -466,7 +466,9 @@
     });
   }
   let syncingLinkedComponent = false;
+  let skipLinkedSyncMutationBatch = false;
   const linkedComponentObserver = new MutationObserver(mutations => {
+    if (skipLinkedSyncMutationBatch) { skipLinkedSyncMutationBatch = false; return; }
     if (syncingLinkedComponent || !selected?.dataset.componentId) return;
     if (!mutations.some(mutation => selected === mutation.target || selected.contains(mutation.target))) return;
     const component = Object.values(project.components || {}).find(item => item && typeof item === 'object' && item.id === selected.dataset.componentId);
