@@ -1,26 +1,31 @@
-# CodeStruct Visual Editor
+# CodeStruct Visual Website Editor
 
-A Webflow-inspired visual website editor interface built with plain HTML, CSS, and JavaScript. It runs without a build step or framework.
+CodeStruct is a no-build, browser-based visual website editor inspired by the general workflow of tools such as Webflow. It is not an exact copy of Webflow and does not currently provide feature parity with its hosted design, CMS, collaboration, and publishing platform.
 
-## Run locally
+## Run
 
-1. Clone or download this repository.
-2. Open `index.html` in a modern browser, or serve the directory using a local static server.
-3. Use the left rail to open the element library and navigator.
-4. Add elements, select sections on the canvas, and edit content and styles in the inspector.
-5. Use the viewport controls to preview desktop, tablet, and mobile widths.
-6. Choose **Code** / **Export HTML** to copy a snapshot of the current canvas markup.
+Open `index.html` in a modern browser, or serve this directory with a static server:
 
-## Included
+```sh
+python3 -m http.server 8000
+```
 
-- Responsive four-area editor shell with element library, canvas, navigator, and style inspector.
-- Starter landing-page canvas and element insertion for sections, containers, columns, headings, paragraphs, buttons, links, images, video placeholders, dividers, quotes, and forms.
-- Canvas element selection, editable text, CSS styling controls, IDs, deletion, and element naming.
-- Desktop/tablet/mobile canvas widths, zoom controls, undo/redo, keyboard shortcuts, and HTML export.
-- Preview mode and a publish-dialog prototype.
+Then open `http://localhost:8000`.
 
-## Current limitations
+## Current editor capabilities
 
-This is an interactive front-end editor foundation, not a complete Webflow replacement or production publishing platform. Projects are not persisted to a database; refreshes reset changes. Asset upload, multi-page routing, reusable components, CMS/data bindings, visual interaction workflows, code-component execution, authentication, collaboration, and deployment/custom-domain publishing are not implemented. The Publish action only marks the current draft locally. Exported markup uses the repository stylesheet reference and is not a complete self-contained production export.
+- Four-region editor shell: tool rail, element/page/assets panel, responsive canvas, and style inspector.
+- Starter page and element palette for sections, containers, columns, headings, paragraphs, buttons, links, image/video placeholders, dividers, quotes, and forms.
+- Canvas selection, inline text editing, element naming and IDs, deletion, duplication (`Ctrl/Cmd+D)), and style controls for layout, spacing, typography, colors, radius, and opacity.
+- Desktop, tablet, and mobile canvas viewport presets; zoom; undo/redo; keyboard shortcuts.
+- Multiple local pages: create, switch, rename, duplicate, and delete pages.
+- Image uploads stored in the current browser's local project, with uploaded images insertable onto the canvas.
+- Automatic local browser storage for project pages, assets, and project name.
+- HTML export and a standalone current-page HTML download with CSS embedded where the browser permits stylesheet access.
+- Responsive preview mode and a keyboard-accessible selection baseline.
 
-No build or dependency installation is required. Serve this folder with any static web server or deploy it as a static site. Hosting configuration and end-to-end browser tests still need to be added before production release.
+## Important limitations
+
+This is an evolving client-side editor, **not a production-ready Webflow replacement**. Data is stored in the current browser profile only; there is no cloud database, login, team collaboration, permissions, CMS collections, dynamic data binding, reusable symbols/components, breakpoint-specific style model, full interaction timeline, code-component sandbox, SEO workflow, form backend, asset CDN, version history, or actual public deployment/custom-domain publishing. Multiple pages are managed locally, but the download action exports only the current page, not a multi-page site bundle. Large images may exceed browser local-storage quota. Exported pages should be reviewed and tested before production use.
+
+No third-party dependencies or build step are required. The repository includes static validation via Node.js CI; browser-level interaction tests should be added before treating the editor as release-ready.
