@@ -72,6 +72,7 @@
 
   // Persistence, multi-page editing, assets and safer exports.
   const PROJECT_KEY = 'codestruct.project.v2';
+  const LEGACY_PROJECT_KEY = 'codestruct.project.v1';
   const project = { name: 'Untitled website', activePage: 'Home', pages: {}, assets: [] };
   let persistTimer = null;
   function capturePage() {
