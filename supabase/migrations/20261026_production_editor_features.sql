@@ -182,3 +182,11 @@ begin
 end $$;
 revoke all on function public.sytely_save_project_v2(uuid,bigint,jsonb,text,boolean,jsonb) from public,anon;
 grant execute on function public.sytely_save_project_v2(uuid,bigint,jsonb,text,boolean,jsonb) to authenticated;
+
+-- Private realtime topics prevent non-members from seeing editor presence or selection broadcasts.
+drop policy if exists "Project members can read editor presence" on realtime.messages;
+create policy "Project members can read editor presence" on realtime.messages for select to authenticated
+using (exists(select 1 from public.sytely_projects p where p.id=substring(realtime.topic() from '^codestruct-project-([0-9a-f-]{36})$')::uuid and (p.owner_id=(select auth.uid()) or exists(select 1 from public.sytely_project_members m where m.project_id=p.id and m.user_id=(select auth.uid())))));
+drop policy if exists "Project members can broadcast editor presence" on realtime.messages;
+create policy "Project members can broadcast editor presence" on realtime.messages for insert to authenticated
+with check (exists(select 1 from public.sytely_projects p where p.id=substring(realtime.topic() from '^codestruct-project-([0-9a-f-]{36})$')::uuid and (p.owner_id=(select auth.uid()) or exists(select 1 from public.sytely_project_members m where m.project_id=p.id and m.user_id=(select auth.uid())))));
