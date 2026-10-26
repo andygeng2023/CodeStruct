@@ -228,7 +228,7 @@
     for (const sheet of [...document.styleSheets]) {
       try { css += [...sheet.cssRules].map(rule => rule.cssText).join('\\n') + '\\n'; } catch {}
     }
-    css += '\\n' + Object.entries(project.classes || {}).map(([name,props]) => {
+    css += '\\n@keyframes csFade{from{opacity:0}to{opacity:1}}@keyframes csRise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}@keyframes csSlide{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:translateX(0)}}@keyframes csScale{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}[data-anim-preset]{animation-duration:var(--cs-anim-duration,600ms);animation-delay:var(--cs-anim-delay,0ms);animation-fill-mode:both;animation-timing-function:cubic-bezier(.2,.7,.2,1)}[data-anim-preset="fade"]{animation-name:csFade}[data-anim-preset="rise"]{animation-name:csRise}[data-anim-preset="slide"]{animation-name:csSlide}[data-anim-preset="scale"]{animation-name:csScale}';\n    css += '\\n' + Object.entries(project.classes || {}).map(([name,props]) => {
       const declarations = Object.entries(props || {}).filter(([k,v]) => ['color','backgroundColor','padding','fontSize','borderRadius'].includes(k) && typeof v === 'string' && /^[#a-zA-Z0-9.%() ,/-]+$/.test(v)).map(([k,v]) => k.replace(/[A-Z]/g,c=>'-'+c.toLowerCase())+':'+v).join(';');
       return /^[a-zA-Z_][\\w-]*$/.test(name) && declarations ? '.'+CSS.escape(name)+'{'+declarations+'}' : '';
     }).join('\\n') + '\\n' + Object.entries(project.responsiveStyles || {}).map(([key,entry]) => {
@@ -586,8 +586,19 @@
       });
     });
   }
+  function applyAnimationStyles() {
+    let styleNode = document.getElementById('cs-animation-styles');
+    if (!styleNode) { styleNode = document.createElement('style'); styleNode.id = 'cs-animation-styles'; document.head.appendChild(styleNode); }
+    styleNode.textContent = '@keyframes csFade{from{opacity:0}to{opacity:1}}@keyframes csRise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}@keyframes csSlide{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:translateX(0)}}@keyframes csScale{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}' +
+      '[data-anim-preset]{animation-duration:var(--cs-anim-duration,600ms);animation-delay:var(--cs-anim-delay,0ms);animation-fill-mode:both;animation-timing-function:cubic-bezier(.2,.7,.2,1)}' +
+      '[data-anim-preset="fade"]{animation-name:csFade}[data-anim-preset="rise"]{animation-name:csRise}[data-anim-preset="slide"]{animation-name:csSlide}[data-anim-preset="scale"]{animation-name:csScale}';
+    $('.canvas-node',canvas).forEach(node => {
+      node.style.setProperty('--cs-anim-duration',(Number(node.dataset.animDuration)||600)+'ms');
+      node.style.setProperty('--cs-anim-delay',(Number(node.dataset.animDelay)||0)+'ms');
+    });
+  }
   const baseBindNodes = bindNodes;
-  bindNodes = function() { baseBindNodes(); applyInteractionRules(); };
+  bindNodes = function() { baseBindNodes(); applyInteractionRules(); applyAnimationStyles(); };
   function renderSiteSettingsPanel() {
     project.seo = project.seo || {};
     const seo = project.seo;
@@ -597,13 +608,29 @@
       '<label class="field-label">Canonical URL (optional)</label><input id="seoCanonical" class="full-input" type="url" placeholder="https://example.com/page" value="' + esc(seo.canonical || '') + '">' +
       '<label class="field-label">Social preview image (HTTPS)</label><input id="seoSocialImage" class="full-input" type="url" placeholder="https://example.com/preview.png" value="' + esc(seo.socialImage || '') + '">' +
       '<label><input id="seoIndexable" type="checkbox" ' + (seo.indexable === false ? '' : 'checked') + '> Allow search indexing</label>' +
-      '<button id="saveSiteSeo" class="button primary full-button">Save SEO settings</button><div class="panel-divider"></div><button id="runAccessibilityAudit" class="button secondary full-button">Run accessibility audit</button><div id="accessibilityResults" class="hint" role="status"></div></div>');
+      '<button id="saveSiteSeo" class="button primary full-button">Save SEO settings</button><div class="panel-divider"></div><strong class="panel-small-heading">Animation timeline</strong><p class="hint">Select an element, set its entrance preset and timing, then add it to the timeline.</p><label class="field-label">Preset</label><select id="animPreset" class="full-input"><option value="">None</option><option value="fade">Fade in</option><option value="rise">Rise</option><option value="slide">Slide in</option><option value="scale">Scale in</option></select><label class="field-label">Start delay (ms)</label><input id="animDelay" class="full-input" type="number" min="0" max="10000" value="0"><label class="field-label">Duration (ms)</label><input id="animDuration" class="full-input" type="number" min="100" max="10000" value="600"><button id="applyAnim" class="button secondary full-button">Apply animation to selected</button><div id="animTimeline" class="page-list">' + $('.canvas-node',canvas).filter(n=>n.dataset.animPreset).map(n=>'<div class="interaction-row"><span>' + esc(n.dataset.node || n.tagName.toLowerCase()) + '</span><small>' + esc(n.dataset.animPreset) + ' · ' + esc(n.dataset.animDelay || '0') + 'ms</small><button data-remove-anim="' + esc(n.dataset.editorKey || '') + '">×</button></div>').join('') + '</div><div class="panel-divider"></div><button id="runAccessibilityAudit" class="button secondary full-button">Run accessibility audit</button><div id="accessibilityResults" class="hint" role="status"></div></div>');
     $('#saveSiteSeo')?.addEventListener('click', () => {
       const canonical = $('#seoCanonical').value.trim(), socialImage = $('#seoSocialImage').value.trim();
       if (canonical && !/^https?:\/\//i.test(canonical)) return notice('Canonical URL must use HTTP or HTTPS.');
       if (socialImage && !/^https:\/\//i.test(socialImage)) return notice('Social preview image must use HTTPS.');
       project.seo = {title:$('#seoTitle').value.trim().slice(0,120),description:$('#seoDescription').value.trim().slice(0,300),canonical,socialImage,indexable:$('#seoIndexable').checked};
       scheduleSave(); notice('SEO settings saved');
+    });
+    $('#applyAnim')?.addEventListener('click', () => {
+      if (!selected) return notice('Select an element on the canvas first');
+      ensureNodeKeys();
+      const preset = $('#animPreset').value;
+      if (!preset) { delete selected.dataset.animPreset; delete selected.dataset.animDelay; delete selected.dataset.animDuration; }
+      else {
+        selected.dataset.animPreset = preset;
+        selected.dataset.animDelay = String(Math.max(0,Math.min(10000,Number($('#animDelay').value)||0)));
+        selected.dataset.animDuration = String(Math.max(100,Math.min(10000,Number($('#animDuration').value)||600)));
+      }
+      scheduleSave(); snapshot(); applyAnimationStyles(); renderSiteSettingsPanel(); notice('Animation timeline updated');
+    });
+    $('[data-remove-anim]').forEach(button => button.onclick = () => {
+      const node = $('.canvas-node',canvas).find(n => n.dataset.editorKey === button.dataset.removeAnim);
+      if (node) { delete node.dataset.animPreset; delete node.dataset.animDelay; delete node.dataset.animDuration; applyAnimationStyles(); scheduleSave(); renderSiteSettingsPanel(); }
     });
     $('#runAccessibilityAudit')?.addEventListener('click', () => {
       const issues = [];
