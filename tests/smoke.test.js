@@ -23,9 +23,9 @@ assert.match(cloud, /postgres_changes/, 'cross-session update listener is implem
 const htmlIds = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]));
 const dynamicIds = new Set(['nodeText', 'newPage', 'renamePage', 'duplicatePage', 'deletePage', 'assetUpload', 'exportSettings', 'classNameInput', 'applyClass', 'collectionName', 'createCollection', 'interactionEvent', 'interactionAction', 'interactionValue', 'addInteraction', 'customCss', 'customJs', 'saveCustomCode']);
 const referencedIds = new Set([...app.matchAll(/\$\('#([A-Za-z][\w-]*)'/g)].map(m => m[1]));
-const missing = [...referencedIds].filter(id => !htmlIds.has(id) && !dynamicIds.has(id));
 const generatedIds = ['saveComponent', 'componentName', 'saveClassStyles', 'classPadding', 'classFontSize', 'classRadius', 'classTextColor', 'classBgColor'];
 generatedIds.forEach(id => dynamicIds.add(id));
+const missing = [...referencedIds].filter(id => !htmlIds.has(id) && !dynamicIds.has(id));
 assert.deepEqual(missing, [], 'static app selectors should point to existing or documented dynamic IDs');
 
 console.log('CodeStruct smoke checks passed.');
