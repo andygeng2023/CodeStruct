@@ -8,7 +8,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
 });
 let currentUser = null;
 let realtimeChannel = null;
-let lastCloudSaveAt = 0;
+let lastCloudSaveAt = 0;\nlet activeRevision = null;\nconst editorSessionId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random();\nlet collaboratorPresence = [];
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -142,35 +142,55 @@ async function saveCloudProject(publish) {
     const doc = currentDocument();
     const existingId = editor().getCloudProjectId();
     let slug = makeSlug(doc.name);
+    let revision = activeRevision;
     if (existingId) {
-      const existing = await supabase.from('sytely_projects').select('slug').eq('id', existingId).single();
+      const existing = await supabase.from('sytely_projects').select('slug,revision').eq('id', existingId).single();
       if (existing.error) throw existing.error;
       slug = existing.data.slug;
+      if (revision == null) revision = Number(existing.data.revision || 1);
     }
-    const row = {
-      owner_id: currentUser.id,
-      name: String(doc.name || 'Untitled website').slice(0, 120),
-      document: doc,
-      updated_at: new Date().toISOString()
-    };
-    if (!existingId) row.slug = slug;
+    let publishedDocument = null;
     if (publish) {
       const pages = buildPublishedPages(editor().getAllExportHTML(), slug);
       const activePageKey = String(doc.activePage || 'home').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'home';
-      row.published_document = { ...doc, html: pages[activePageKey] || buildPublishedHTML(editor().getExportHTML(), slug), pages, published_at: new Date().toISOString() };
-      row.is_published = true;
-      row.published_at = new Date().toISOString();
+      publishedDocument = { ...doc, html: pages[activePageKey] || buildPublishedHTML(editor().getExportHTML(), slug), pages, published_at: new Date().toISOString() };
     }
-    let query;
+    let projectId = existingId;
     if (existingId) {
-      query = supabase.from('sytely_projects').update(row).eq('id', existingId).select('id').single();
+      const { data, error } = await supabase.rpc('sytely_save_project_v2', {
+        p_project_id: existingId,
+        p_expected_revision: revision,
+        p_document: doc,
+        p_name: String(doc.name || 'Untitled website').slice(0,120),
+        p_publish: !!publish,
+        p_published_document: publishedDocument
+      });
+      if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+      if (!result?.ok) {
+        activeRevision = Number(result?.current_revision ?? revision);
+        throw new Error('Save conflict: another session changed this project. Reload the latest version before editing further.');
+      }
+      activeRevision = Number(result.current_revision);
     } else {
-      query = supabase.from('sytely_projects').insert(row).select('id').single();
+      const row = {
+        owner_id: currentUser.id, name: String(doc.name || 'Untitled website').slice(0,120),
+        slug, document: doc, revision: 1, updated_at: new Date().toISOString(),
+        ...(publish ? { published_document: publishedDocument, is_published: true, published_at: new Date().toISOString() } : {})
+      };
+      const { data, error } = await supabase.from('sytely_projects').insert(row).select('id,revision').single();
+      if (error) throw error;
+      projectId = data.id; activeRevision = Number(data.revision || 1);
+      editor().setCloudProjectId(projectId);
     }
-    const { data, error } = await query;
-    if (error) throw error;
-    editor().setCloudProjectId(data.id);
-    if (publish) await saveVersion();
+    editor().setCloudProjectId(projectId);
+    if (publish) {
+      const { error: versionError } = await supabase.from('sytely_project_versions').insert({
+        project_id: projectId, owner_id: currentUser.id,
+        label: 'Published ' + new Date().toLocaleString(), document: doc
+      });
+      if (versionError) console.warn('Published successfully but version snapshot failed', versionError);
+    }
     window.dispatchEvent(new Event('codestruct-cloud-project-selected'));
     message(publish ? 'Published website: https://syylksyuulzljivcvopo.supabase.co/functions/v1/sytely-site?slug=' + slug : 'Project saved to cloud.', 'success');
     await showCloudPanel();
