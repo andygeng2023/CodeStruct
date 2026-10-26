@@ -14,8 +14,8 @@ assert.match(app, /function renderAssetsPanel\(/, 'asset management is implement
 assert.match(app, /function downloadCurrentPage\(/, 'publish action exports a page instead of falsely claiming deployment');
 assert.match(app, /function duplicateSelected\(/, 'element duplication is implemented');
 assert.match(app, /function renderComponentsPanel\(/, 'linked reusable components are implemented');
-assert.doesNotMatch(app, /(?<!\\$)\\$\\([^)]*\\)\\.(?:forEach|filter|find|map)/, 'collection operations use the multi-element selector helper');
-assert.doesNotMatch(cloud, /(?<!\\$)\\$\\([^)]*\\)\\.(?:forEach|filter|find|map)/, 'cloud collection operations use the multi-element selector helper');
+assert.doesNotMatch(app, /(?<!\$)\$\([^)]*\)\.(?:forEach|filter|find|map)/, 'collection operations use the multi-element selector helper');
+assert.doesNotMatch(cloud, /(?<!\$)\$\([^)]*\)\.(?:forEach|filter|find|map)/, 'cloud collection operations use the multi-element selector helper');
 assert.match(app, /linkedComponentObserver/, 'linked component edits propagate automatically');
 assert.match(app, /getAllExportHTML\(\)/, 'all pages can be exported for publishing');
 assert.match(app, /@media\(max-width:767px\)/, 'mobile breakpoint CSS is exported');
