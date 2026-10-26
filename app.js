@@ -572,7 +572,8 @@
       if (host) host.textContent = issues.length ? issues.slice(0,12).join(' ') : 'No issues found by this basic check. This is not a full WCAG audit.';
     });
   }
-\n  // New workspace tools. The CMS is explicitly local until a server backend is configured.
+
+  // New workspace tools. The CMS is explicitly local until a server backend is configured.
   $$('.rail-tool').forEach(b => {
     if (b.dataset.panel === 'classes') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderClassesPanel(); };
     if (b.dataset.panel === 'cms') b.onclick = () => { $$('.rail-tool').forEach(x=>x.classList.toggle('selected',x===b)); left.classList.remove('collapsed'); renderCmsPanel(); };
