@@ -218,6 +218,8 @@
   }
 
   function getExportHTML() {
+    const restoreBreakpoint = activeBreakpoint;
+    if (restoreBreakpoint !== 'desktop') applyResponsiveBreakpoint('desktop');
     const clone = canvas.cloneNode(true);
     clone.querySelectorAll('.selected').forEach(n => n.classList.remove('selected'));
     clone.querySelectorAll('[contenteditable]').forEach(n => n.removeAttribute('contenteditable'));
@@ -242,6 +244,7 @@
     const canonical = /^https?:\/\//i.test(project.seo?.canonical || '') ? esc(project.seo.canonical) : '';
     const socialImage = /^https:\/\//i.test(project.seo?.socialImage || '') ? esc(project.seo.socialImage) : '';
     const robots = project.seo?.indexable === false ? 'noindex,nofollow' : 'index,follow';
+    if (restoreBreakpoint !== 'desktop') applyResponsiveBreakpoint(restoreBreakpoint);
     return '<!doctype html>\\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title><meta name="description" content="' + description + '"><meta name="robots" content="' + robots + '">' + (canonical ? '<link rel="canonical" href="' + canonical + '">' : '') + (socialImage ? '<meta property="og:image" content="' + socialImage + '">' : '') + '<style>' + css.split('</style').join('<\\/style') + '</style></head><body>' + clone.outerHTML + '</body></html>';
   }
   function downloadCurrentPage() {
