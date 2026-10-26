@@ -370,7 +370,7 @@ async function attachRealtime() {
   if (realtimeChannel) { await supabase.removeChannel(realtimeChannel); realtimeChannel = null; }
   const id = editor().getCloudProjectId();
   if (!id || !currentUser) return;
-  realtimeChannel = supabase.channel('codestruct-project-' + id, { config: { presence: { key: editorSessionId } } })
+  realtimeChannel = supabase.channel('codestruct-project-' + id, { config: { private: true, presence: { key: editorSessionId } } })
     .on('presence', { event: 'sync' }, () => {
       const state = realtimeChannel?.presenceState?.() || {};
       collaboratorPresence = Object.values(state).flat().filter(item => item.user_id !== currentUser?.id || item.session_id !== editorSessionId);
