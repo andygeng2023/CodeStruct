@@ -13,6 +13,7 @@ let activeRevision = null;
 let saveInProgress = false;
 const editorSessionId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random();
 let collaboratorPresence = [];
+let remoteSelectionSessionId = null;
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -328,10 +329,22 @@ async function attachRealtime() {
     .on('presence', { event: 'sync' }, () => {
       const state = realtimeChannel?.presenceState?.() || {};
       collaboratorPresence = Object.values(state).flat().filter(item => item.user_id !== currentUser?.id || item.session_id !== editorSessionId);
+      if (remoteSelectionSessionId && !Object.values(state).flat().some(item => item.session_id === remoteSelectionSessionId)) {
+        remoteSelectionSessionId = null;
+        window.dispatchEvent(new CustomEvent('codestruct-remote-selection', { detail: { elementKey: null } }));
+      }
       const status = $('#collaborationStatus');
       if (status) status.textContent = collaboratorPresence.length
         ? collaboratorPresence.length + ' other editor session(s) online. Saves use revision checks to prevent overwrites.'
         : 'You are the only active editor. Revision checks protect against stale saves.';
+    })
+    .on('broadcast', { event: 'selection' }, message => {
+      const payload = message.payload || {};
+      if (!payload.sessionId || payload.sessionId === editorSessionId) return;
+      remoteSelectionSessionId = payload.sessionId;
+      window.dispatchEvent(new CustomEvent('codestruct-remote-selection', {
+        detail: { elementKey: payload.elementKey || null, sessionId: payload.sessionId, email: payload.email || 'Collaborator' }
+      }));
     })
     .on('postgres_changes', {
       event: 'UPDATE', schema: 'public', table: 'sytely_projects', filter: 'id=eq.' + id
@@ -377,3 +390,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 window.addEventListener('codestruct-cloud-project-selected', attachRealtime);
+window.addEventListener('codestruct-selection-changed', event => {
+  if (!realtimeChannel || !currentUser) return;
+  realtimeChannel.send({
+    type: 'broadcast',
+    event: 'selection',
+    payload: { sessionId: editorSessionId, user_id: currentUser.id, email: currentUser.email || 'Collaborator', elementKey: event.detail?.elementKey || null }
+  }).catch(error => console.warn('Could not broadcast editor selection', error));
+});
