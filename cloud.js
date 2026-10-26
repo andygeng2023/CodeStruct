@@ -71,7 +71,7 @@ function renderCloudPanel(projects = []) {
       '<label class="field-label">Password</label><input id="cloudPassword" type="password" class="full-input" autocomplete="current-password" minlength="8" placeholder="At least 8 characters">' +
       '<div class="cloud-auth-actions"><button id="cloudSignIn" class="button primary">Sign in</button><button id="cloudSignUp" class="button secondary">Create account</button></div>') +
     '<div id="cloudMessage" class="cloud-message" role="status"></div>' +
-    (signedIn ? '<button id="cloudSave" class="button primary full-button">Save current project to cloud</button><button id="cloudPublish" class="button secondary full-button">Publish website</button><button id="cloudVersion" class="button secondary full-button">Save version</button><button id="cloudHistory" class="button secondary full-button">Version history</button><button id="cloudCmsSync" class="button secondary full-button">Sync CMS collections</button><button id="cloudInbox" class="button secondary full-button">Form submissions inbox</button><button id="cloudDomain" class="button secondary full-button">Custom domain setup</button><div id="collaborationStatus" class="hint" role="status">Live editor presence and revision conflict checks</div><label class="field-label" for="cloudAsset">Upload image to asset library</label><input id="cloudAsset" class="full-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml"><div id="assetResult"></div><div class="panel-divider"></div><strong class="panel-small-heading">Your cloud projects</strong>' +
+    (signedIn ? '<button id="cloudSave" class="button primary full-button">Save current project to cloud</button><button id="cloudPublish" class="button secondary full-button">Publish website</button><button id="cloudVersion" class="button secondary full-button">Save version</button><button id="cloudHistory" class="button secondary full-button">Version history</button><button id="cloudCmsSync" class="button secondary full-button">Sync CMS collections</button><button id="cloudInbox" class="button secondary full-button">Form submissions inbox</button><button id="cloudDomain" class="button secondary full-button">Custom domain setup</button><div id="collaborationStatus" class="hint" role="status">Live editor presence and revision conflict checks</div><div class="panel-divider"></div><strong class="panel-small-heading">Collaborators</strong><label class="field-label">Invite by email</label><input id="collabEmail" type="email" class="full-input" placeholder="teammate@example.com"><label class="field-label">Access level</label><select id="collabRole" class="full-input"><option value="editor">Editor — can edit and publish</option><option value="viewer">Viewer — read only</option></select><button id="inviteCollaborator" class="button secondary full-button">Invite collaborator</button><button id="manageCollaborators" class="button secondary full-button">Manage collaborators</button><div id="collaboratorList"></div><label class="field-label" for="cloudAsset">Upload image to asset library</label><input id="cloudAsset" class="full-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml"><div id="assetResult"></div><div class="panel-divider"></div><strong class="panel-small-heading">Your cloud projects</strong>' +
       projects.map(p => '<div class="cloud-project"><strong>' + esc(p.name) + '</strong><small>' + esc(p.slug) + (p.is_published ? ' · published' : ' · draft') + '</small>' + (p.is_published ? '<a href="https://syylksyuulzljivcvopo.supabase.co/functions/v1/sytely-site?slug=' + encodeURIComponent(p.slug) + '" target="_blank" rel="noopener noreferrer">Open published website</a>' : '') + '<button class="button secondary full-button" data-cloud-load="' + esc(p.id) + '">Open project</button></div>').join('') +
       '<p class="hint">Cloud saves are private to your authenticated account under database row-level security. Publish stores a snapshot; public hosting is a separate step.</p>' :
       '<p class="hint">Sign in to save and open projects across browsers. Cloud storage uses the Sytely Production Supabase project.</p>') +
@@ -90,6 +90,8 @@ function renderCloudPanel(projects = []) {
   $('#cloudCmsSync')?.addEventListener('click', syncCmsToCloud);
   $('#cloudInbox')?.addEventListener('click', showFormInbox);
   $('#cloudDomain')?.addEventListener('click', showDomainSetup);
+  $('#inviteCollaborator')?.addEventListener('click', inviteCollaborator);
+  $('#manageCollaborators')?.addEventListener('click', showCollaborators);
   $$('[data-cloud-load]').forEach(button => button.addEventListener('click', () => loadCloudProject(button.dataset.cloudLoad)));
 }
 async function runAuth(mode) {
@@ -236,6 +238,49 @@ async function showVersionHistory() {
     if (!version) return;
     editor().loadCloudDocument(version.document, id);
     message('Version restored in the editor. Save to cloud to make it current.', 'success');
+  }));
+}
+
+
+async function inviteCollaborator() {
+  const projectId = editor().getCloudProjectId();
+  const email = ($('#collabEmail')?.value || '').trim().toLowerCase();
+  const role = $('#collabRole')?.value === 'viewer' ? 'viewer' : 'editor';
+  if (!currentUser || !projectId) return message('Save this project to cloud before inviting collaborators.', 'error');
+  if (!email) return message('Enter the collaborator email address.', 'error');
+  const button = $('#inviteCollaborator'); if (button) button.disabled = true;
+  try {
+    const { data, error } = await supabase.functions.invoke('sytely-invite', { body: { project_id: projectId, email, role } });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    message(data?.already_registered ? 'Collaborator access granted to ' + email + '.' : 'Invitation sent to ' + email + '.', 'success');
+    $('#collabEmail').value = '';
+    await showCollaborators();
+  } catch (error) {
+    message(error.message || 'Could not invite collaborator. Confirm the project owner and Supabase email delivery settings.', 'error');
+  } finally { if (button) button.disabled = false; }
+}
+async function showCollaborators() {
+  const projectId = editor().getCloudProjectId();
+  if (!currentUser || !projectId) return message('Save this project to cloud first.', 'error');
+  const [{ data: project, error: projectError }, { data: members, error: memberError }] = await Promise.all([
+    supabase.from('sytely_projects').select('owner_id').eq('id', projectId).single(),
+    supabase.from('sytely_project_members').select('user_id,email,role,invited_at').eq('project_id', projectId).order('invited_at', { ascending: true })
+  ]);
+  if (projectError) return message(projectError.message || 'Could not load project permissions.', 'error');
+  if (memberError) return message(memberError.message || 'Could not load collaborators.', 'error');
+  const owner = project.owner_id === currentUser.id;
+  const rows = members || [];
+  const host = $('#collaboratorList');
+  if (host) host.innerHTML = rows.length ? rows.map(member =>
+    '<section class="cloud-project"><strong>' + esc(member.email) + '</strong><small>' + esc(member.role) + ' · invited ' + esc(new Date(member.invited_at).toLocaleDateString()) + '</small>' +
+    (owner ? '<button class="button secondary full-button" data-remove-member="' + esc(member.user_id) + '">Remove access</button>' : '') + '</section>'
+  ).join('') : '<p class="hint">No invited collaborators yet.</p>';
+  $('[data-remove-member]').forEach(button => button.addEventListener('click', async () => {
+    if (!confirm('Remove this collaborator’s access?')) return;
+    const { error } = await supabase.from('sytely_project_members').delete().eq('project_id', projectId).eq('user_id', button.dataset.removeMember);
+    if (error) return message(error.message || 'Could not remove access.', 'error');
+    await showCollaborators();
   }));
 }
 
