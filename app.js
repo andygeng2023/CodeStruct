@@ -573,6 +573,12 @@
   window.CodeStructEditor = {
     getProject() { capturePage(); return JSON.parse(JSON.stringify(project)); },
     getExportHTML() { capturePage(); return getExportHTML(); },
+    insertImage(url, alt = 'Uploaded image') {
+      if (!String(url).startsWith('https://')) throw new Error('Only HTTPS image URLs can be inserted.');
+      const section = document.createElement('section'); section.className = 'new-section canvas-node'; section.dataset.node = 'image'; section.tabIndex = 0;
+      const image = document.createElement('img'); image.src = url; image.alt = String(alt).slice(0,240); image.style.maxWidth = '100%'; image.style.height = 'auto';
+      section.appendChild(image); canvas.appendChild(section); bindNodes(); select(section); snapshot(); scheduleSave();
+    },
     getCloudProjectId() { return project.cloudProjectId || null; },
     setCloudProjectId(id) { project.cloudProjectId = id || null; saveProject(); },
     loadCloudDocument(doc, id) {
