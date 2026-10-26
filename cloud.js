@@ -161,6 +161,26 @@ async function saveVersion() {
   if (error) return message(error.message || 'Could not save version.', 'error');
   message('Version saved.', 'success');
 }
+async function showVersionHistory() {
+  const id = editor().getCloudProjectId();
+  if (!currentUser || !id) return message('Save this project to cloud first.', 'error');
+  const result = await supabase.from('sytely_project_versions')
+    .select('id,label,created_at,document').eq('project_id', id)
+    .order('created_at', { ascending: false }).limit(50);
+  if (result.error) return message(result.error.message, 'error');
+  const versions = result.data || [];
+  setPanel('Version history', 'Saved project snapshots',
+    '<div class="page-list"><button id="historyBack" class="button secondary full-button">Back to cloud projects</button>' +
+    versions.map(v => '<div class="cloud-project"><strong>' + esc(v.label) + '</strong><small>' + esc(new Date(v.created_at).toLocaleString()) + '</small><button class="button secondary full-button" data-restore-version="' + esc(v.id) + '">Restore version</button></div>').join('') +
+    (versions.length ? '' : '<p class="hint">No saved versions yet.</p>') + '</div>');
+  $('#historyBack')?.addEventListener('click', showCloudPanel);
+  $('[data-restore-version]').forEach(button => button.addEventListener('click', () => {
+    const version = versions.find(v => v.id === button.dataset.restoreVersion);
+    if (!version) return;
+    editor().loadCloudDocument(version.document, id);
+    message('Version restored in the editor. Save to cloud to make it current.', 'success');
+  }));
+}
 async function loadCloudProject(id) {
   try {
     const { data, error } = await supabase.from('sytely_projects')
