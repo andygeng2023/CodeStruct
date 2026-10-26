@@ -13,7 +13,7 @@ assert.match(app, /function downloadCurrentPage\(/, 'publish action exports a pa
 assert.match(app, /function duplicateSelected\(/, 'element duplication is implemented');
 
 const htmlIds = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]));
-const dynamicIds = new Set(['nodeText', 'newPage', 'renamePage', 'duplicatePage', 'deletePage', 'assetUpload', 'exportSettings']);
+const dynamicIds = new Set(['nodeText', 'newPage', 'renamePage', 'duplicatePage', 'deletePage', 'assetUpload', 'exportSettings', 'classNameInput', 'applyClass', 'collectionName', 'createCollection', 'interactionEvent', 'interactionAction', 'interactionValue', 'addInteraction', 'customCss', 'customJs', 'saveCustomCode']);
 const referencedIds = new Set([...app.matchAll(/\$\('#([A-Za-z][\w-]*)'/g)].map(m => m[1]));
 const missing = [...referencedIds].filter(id => !htmlIds.has(id) && !dynamicIds.has(id));
 assert.deepEqual(missing, [], 'static app selectors should point to existing or documented dynamic IDs');
