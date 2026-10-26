@@ -138,6 +138,7 @@ async function saveCloudProject(publish) {
     const { data, error } = await query;
     if (error) throw error;
     editor().setCloudProjectId(data.id);
+    window.dispatchEvent(new Event('codestruct-cloud-project-selected'));
     message(publish ? 'Published snapshot saved to Supabase.' : 'Project saved to cloud.', 'success');
     await showCloudPanel();
   } catch (error) {
@@ -152,6 +153,7 @@ async function loadCloudProject(id) {
       .select('id,name,document').eq('id', id).single();
     if (error) throw error;
     editor().loadCloudDocument(data.document, data.id);
+    window.dispatchEvent(new Event('codestruct-cloud-project-selected'));
     message('Cloud project opened.', 'success');
   } catch (error) {
     message(error.message || 'Could not open project.', 'error');
@@ -167,7 +169,8 @@ async function showCloudPanel() {
     message(error.message || 'Could not load cloud projects.', 'error');
   }
 }
-function attachRealtime() {
+async function attachRealtime() {
+  if (realtimeChannel) { await supabase.removeChannel(realtimeChannel); realtimeChannel = null; }
   const id = editor().getCloudProjectId();
   if (!id || !currentUser || realtimeChannel) return;
   realtimeChannel = supabase.channel('codestruct-project-' + id)
@@ -196,9 +199,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('#leftPanel').classList.remove('collapsed');
     showCloudPanel();
   });
-  supabase.auth.onAuthStateChange(async () => {
-    await refreshUser();
-    if ($('#panelTitle')?.textContent === 'Cloud & publishing') showCloudPanel();
+  supabase.auth.onAuthStateChange((_event, session) => {
+    currentUser = session?.user || null;
+    if ($('#panelTitle')?.textContent === 'Cloud & publishing') setTimeout(() => showCloudPanel(), 0);
   });
 });
 window.addEventListener('codestruct-cloud-project-selected', attachRealtime);
