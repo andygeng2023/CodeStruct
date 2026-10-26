@@ -214,6 +214,28 @@
     $('#exportCode').value = html;
     $('#codeDialog').showModal();
   }
+
+  function downloadCurrentPage() {
+    const clone = canvas.cloneNode(true);
+    clone.querySelectorAll('.selected').forEach(n => n.classList.remove('selected'));
+    clone.querySelectorAll('[contenteditable]').forEach(n => n.removeAttribute('contenteditable'));
+    clone.querySelectorAll('.canvas-node').forEach(n => n.removeAttribute('tabindex'));
+    let css = '';
+    for (const sheet of [...document.styleSheets]) {
+      try { css += [...sheet.cssRules].map(rule => rule.cssText).join('\n') + '\n'; } catch {}
+    }
+    const html = '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
+      esc(project.activePage || 'Website') + '</title><style>' + css.replace(/<\/style/gi, '<\\/style') +
+      '</style></head><body>' + clone.outerHTML + '</body></html>';
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const filename = (project.activePage || 'website').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'website';
+    a.href = url; a.download = filename + '.html'; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    notice('Downloaded a self-contained HTML file for this page. Hosting is not configured.');
+  }
+
   // Persist edits and snapshots, without requiring a backend or exposing project data remotely.
   const originalDirty = dirty;
   dirty = function () { originalDirty(); scheduleSave(); };
