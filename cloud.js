@@ -154,6 +154,7 @@ async function saveCloudProject(publish) {
     const { data, error } = await query;
     if (error) throw error;
     editor().setCloudProjectId(data.id);
+    if (publish) await saveVersion();
     window.dispatchEvent(new Event('codestruct-cloud-project-selected'));
     message(publish ? 'Published website: https://syylksyuulzljivcvopo.supabase.co/functions/v1/sytely-site?slug=' + slug : 'Project saved to cloud.', 'success');
     await showCloudPanel();
