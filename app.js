@@ -211,7 +211,7 @@
       catch (err) { console.warn('Skipping stylesheet that cannot be exported', err); }
     }
     const html = '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
-      esc(project.activePage || 'CodeStruct export') + '</title><style>' + css.replace(/<\/style/gi, '<\\/style') +
+      esc(project.activePage || 'CodeStruct export') + '</title><meta name="description" content="' + description + '"><meta name="robots" content="' + robots + '">' + (canonical ? '<link rel="canonical" href="' + canonical + '">' : '') + (socialImage ? '<meta property="og:image" content="' + socialImage + '">' : '') + '<style>' + css.replace(/<\/style/gi, '<\\/style') +
       '</style></head><body>' + clone.outerHTML + '</body></html>';
     $('#exportCode').value = html;
     $('#codeDialog').showModal();
@@ -232,8 +232,12 @@
       const declarations = Object.entries(props || {}).filter(([k,v]) => ['color','backgroundColor','padding','fontSize','borderRadius'].includes(k) && typeof v === 'string' && /^[#a-zA-Z0-9.%() ,/-]+$/.test(v)).map(([k,v]) => k.replace(/[A-Z]/g,c=>'-'+c.toLowerCase())+':'+v).join(';');
       return /^[a-zA-Z_][\\w-]*$/.test(name) && declarations ? '.'+CSS.escape(name)+'{'+declarations+'}' : '';
     }).join('\\n') + '\\n' + (project.customCode?.css || '');
-    const title = esc(project.activePage || 'Website');
-    return '<!doctype html>\\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title><style>' + css.split('</style').join('<\\/style') + '</style></head><body>' + clone.outerHTML + '</body></html>';
+    const title = esc(project.seo?.title || project.activePage || 'Website');
+    const description = esc(project.seo?.description || '');
+    const canonical = /^https?:\/\//i.test(project.seo?.canonical || '') ? esc(project.seo.canonical) : '';
+    const socialImage = /^https:\/\//i.test(project.seo?.socialImage || '') ? esc(project.seo.socialImage) : '';
+    const robots = project.seo?.indexable === false ? 'noindex,nofollow' : 'index,follow';
+    return '<!doctype html>\\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title><meta name="description" content="' + description + '"><meta name="robots" content="' + robots + '">' + (canonical ? '<link rel="canonical" href="' + canonical + '">' : '') + (socialImage ? '<meta property="og:image" content="' + socialImage + '">' : '') + '<style>' + css.split('</style').join('<\\/style') + '</style></head><body>' + clone.outerHTML + '</body></html>';
   }
   function downloadCurrentPage() {
     const html = getExportHTML();
@@ -591,8 +595,12 @@
       interactionScript = '<script>(function(){const rules=' + rules + ';rules.forEach(r=>{const n=document.getElementById(r.id);if(!n)return;n.addEventListener(r.event,()=>{if(r.action==="navigate"){if(/^(https?:\\/\\/|\\/|#|mailto:)/i.test(r.value))location.href=r.value;}else if(r.action==="toggle-class"){if(/^[a-zA-Z_][\\w-]*$/.test(r.value))n.classList.toggle(r.value);}else if(r.action==="show-message")alert(r.value);});});})();</scr' + 'ipt>';
     }
     const customJs = project.customCode?.js ? '<script>' + project.customCode.js.replace(/<\/script/gi,'<\\/script') + '</scr' + 'ipt>' : '';
-    const title = esc(project.activePage || 'Website');
-    const html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title><style>' + css.replace(/<\/style/gi,'<\\/style') + '</style></head><body>' + clone.outerHTML + interactionScript + customJs + '</body></html>';
+    const title = esc(project.seo?.title || project.activePage || 'Website');
+    const description = esc(project.seo?.description || '');
+    const canonical = /^https?:\/\//i.test(project.seo?.canonical || '') ? esc(project.seo.canonical) : '';
+    const socialImage = /^https:\/\//i.test(project.seo?.socialImage || '') ? esc(project.seo.socialImage) : '';
+    const robots = project.seo?.indexable === false ? 'noindex,nofollow' : 'index,follow';
+    const html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title><meta name="description" content="' + description + '"><meta name="robots" content="' + robots + '">' + (canonical ? '<link rel="canonical" href="' + canonical + '">' : '') + (socialImage ? '<meta property="og:image" content="' + socialImage + '">' : '') + '<style>' + css.replace(/<\/style/gi,'<\\/style') + '</style></head><body>' + clone.outerHTML + interactionScript + customJs + '</body></html>';
     const blob = new Blob([html],{type:'text/html;charset=utf-8'}), url=URL.createObjectURL(blob), link=document.createElement('a');
     link.href=url; link.download=(project.activePage||'website').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.html';
     document.body.append(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
