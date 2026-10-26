@@ -69,7 +69,7 @@ function renderCloudPanel(projects = []) {
       '<label class="field-label">Password</label><input id="cloudPassword" type="password" class="full-input" autocomplete="current-password" minlength="8" placeholder="At least 8 characters">' +
       '<div class="cloud-auth-actions"><button id="cloudSignIn" class="button primary">Sign in</button><button id="cloudSignUp" class="button secondary">Create account</button></div>') +
     '<div id="cloudMessage" class="cloud-message" role="status"></div>' +
-    (signedIn ? '<button id="cloudSave" class="button primary full-button">Save current project to cloud</button><button id="cloudPublish" class="button secondary full-button">Publish website</button><button id="cloudVersion" class="button secondary full-button">Save version</button><button id="cloudHistory" class="button secondary full-button">Version history</button><label class="field-label" for="cloudAsset">Upload image to asset library</label><input id="cloudAsset" class="full-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml"><div id="assetResult"></div><div class="panel-divider"></div><strong class="panel-small-heading">Your cloud projects</strong>' +
+    (signedIn ? '<button id="cloudSave" class="button primary full-button">Save current project to cloud</button><button id="cloudPublish" class="button secondary full-button">Publish website</button><button id="cloudVersion" class="button secondary full-button">Save version</button><button id="cloudHistory" class="button secondary full-button">Version history</button><button id="cloudCmsSync" class="button secondary full-button">Sync CMS collections</button><button id="cloudInbox" class="button secondary full-button">Form submissions inbox</button><button id="cloudDomain" class="button secondary full-button">Custom domain setup</button><div id="collaborationStatus" class="hint" role="status">Live editor presence and revision conflict checks</div><label class="field-label" for="cloudAsset">Upload image to asset library</label><input id="cloudAsset" class="full-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml"><div id="assetResult"></div><div class="panel-divider"></div><strong class="panel-small-heading">Your cloud projects</strong>' +
       projects.map(p => '<div class="cloud-project"><strong>' + esc(p.name) + '</strong><small>' + esc(p.slug) + (p.is_published ? ' · published' : ' · draft') + '</small>' + (p.is_published ? '<a href="https://syylksyuulzljivcvopo.supabase.co/functions/v1/sytely-site?slug=' + encodeURIComponent(p.slug) + '" target="_blank" rel="noopener noreferrer">Open published website</a>' : '') + '<button class="button secondary full-button" data-cloud-load="' + esc(p.id) + '">Open project</button></div>').join('') +
       '<p class="hint">Cloud saves are private to your authenticated account under database row-level security. Publish stores a snapshot; public hosting is a separate step.</p>' :
       '<p class="hint">Sign in to save and open projects across browsers. Cloud storage uses the Sytely Production Supabase project.</p>') +
@@ -85,6 +85,9 @@ function renderCloudPanel(projects = []) {
   $('#cloudPublish')?.addEventListener('click', () => saveCloudProject(true));
   $('#cloudVersion')?.addEventListener('click', () => saveVersion());
   $('#cloudHistory')?.addEventListener('click', () => showVersionHistory());
+  $('#cloudCmsSync')?.addEventListener('click', syncCmsToCloud);
+  $('#cloudInbox')?.addEventListener('click', showFormInbox);
+  $('#cloudDomain')?.addEventListener('click', showDomainSetup);
   $$('[data-cloud-load]').forEach(button => button.addEventListener('click', () => loadCloudProject(button.dataset.cloudLoad)));
 }
 async function runAuth(mode) {
@@ -233,6 +236,66 @@ async function showVersionHistory() {
     message('Version restored in the editor. Save to cloud to make it current.', 'success');
   }));
 }
+
+async function syncCmsToCloud() {
+  const projectId = editor().getCloudProjectId();
+  if (!currentUser || !projectId) return message('Save this project to cloud first.', 'error');
+  const doc = editor().getProject();
+  try {
+    for (const [collection, items] of Object.entries(doc.collections || {})) {
+      const safeCollection = String(collection).trim().slice(0,80);
+      if (!safeCollection) continue;
+      const rows = (items || []).map((item, index) => {
+        const title = String(item.title || item.name || ('Item ' + (index + 1))).trim().slice(0,200);
+        return { project_id: projectId, collection: safeCollection, slug: makeSlug(title).slice(0,100) || 'item-' + (index + 1), title: title || 'Untitled', body: String(item.body || '').slice(0,20000), fields: item.fields && typeof item.fields === 'object' ? item.fields : {}, is_published: item.is_published !== false, updated_at: new Date().toISOString() };
+      });
+      const { data: existing, error: readError } = await supabase.from('sytely_cms_items').select('id,slug').eq('project_id', projectId).eq('collection', safeCollection);
+      if (readError) throw readError;
+      if (rows.length) {
+        const { error } = await supabase.from('sytely_cms_items').upsert(rows, { onConflict: 'project_id,collection,slug' });
+        if (error) throw error;
+      }
+      const currentSlugs = new Set(rows.map(row => row.slug));
+      const staleIds = (existing || []).filter(row => !currentSlugs.has(row.slug)).map(row => row.id);
+      if (staleIds.length) {
+        const { error } = await supabase.from('sytely_cms_items').delete().in('id', staleIds);
+        if (error) throw error;
+      }
+    }
+    message('CMS collections synced to the cloud. Republish to update the public site.', 'success');
+  } catch (error) { message(error.message || 'CMS sync failed.', 'error'); }
+}
+async function showFormInbox() {
+  const projectId = editor().getCloudProjectId();
+  if (!currentUser || !projectId) return message('Save this project to cloud first.', 'error');
+  const { data, error } = await supabase.from('sytely_form_submissions').select('id,payload,created_at')
+    .eq('project_id', projectId).order('created_at', { ascending: false }).limit(200);
+  if (error) return message(error.message || 'Could not load form submissions.', 'error');
+  const rows = data || [];
+  setPanel('Form submissions', 'Recent messages from your published site',
+    '<div class="page-list"><button id="inboxBack" class="button secondary full-button">Back to cloud projects</button>' +
+    (rows.length ? rows.map(row => '<section class="cms-collection"><strong>' + esc(new Date(row.created_at).toLocaleString()) + '</strong><pre style="white-space:pre-wrap;overflow-wrap:anywhere">' + esc(JSON.stringify(row.payload, null, 2)) + '</pre><button data-delete-submission="' + esc(row.id) + '" class="button secondary full-button">Delete submission</button></section>').join('') : '<p class="hint">No submissions yet. Publish a page containing a form and test it.</p>') + '</div>');
+  $('#inboxBack')?.addEventListener('click', showCloudPanel);
+  $('[data-delete-submission]').forEach(button => button.addEventListener('click', async () => {
+    const { error: deleteError } = await supabase.from('sytely_form_submissions').delete().eq('id', button.dataset.deleteSubmission).eq('project_id', projectId);
+    if (deleteError) return message(deleteError.message || 'Delete failed.', 'error');
+    await showFormInbox();
+  }));
+}
+function showDomainSetup() {
+  const doc = editor().getProject();
+  setPanel('Custom domain setup', 'Domain mapping requires DNS control and a host configured to route requests',
+    '<div class="page-list"><label class="field-label">Your domain (for example, www.example.com)</label><input id="customDomainInput" class="full-input" value="' + esc(doc.customDomain || '') + '" placeholder="www.example.com"><button id="saveDomainIntent" class="button primary full-button">Save domain preference</button><p class="hint">This records the intended domain; it does not claim or activate it.</p><div class="panel-divider"></div><strong>Required before a domain works</strong><ol><li>Own the domain and have access to its DNS records.</li><li>Choose a host or proxy that can serve the published pages and route requests.</li><li>Configure the host’s custom-domain setting and add the exact DNS records it provides.</li><li>Enable HTTPS, verify the domain, then test every page and form.</li></ol><p class="hint">The Supabase public URL is live, but no custom-domain proxy or TLS certificate has been provisioned. DNS records must come from the chosen host; do not add guessed records.</p><button id="domainBack" class="button secondary full-button">Back to cloud projects</button></div>');
+  $('#saveDomainIntent')?.addEventListener('click', () => {
+    const value = $('#customDomainInput').value.trim().toLowerCase();
+    if (value && !/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(value)) return message('Enter a valid domain without protocol or path.', 'error');
+    doc.customDomain = value;
+    editor().loadCloudDocument(doc, editor().getCloudProjectId());
+    message('Domain preference saved locally. Save the project to cloud; routing still needs host and DNS configuration.', 'success');
+  });
+  $('#domainBack')?.addEventListener('click', showCloudPanel);
+}
+
 async function loadCloudProject(id) {
   try {
     const { data, error } = await supabase.from('sytely_projects')
