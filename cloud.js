@@ -238,7 +238,8 @@ async function loadCloudProject(id) {
     const { data, error } = await supabase.from('sytely_projects')
       .select('id,name,document,revision').eq('id', id).single();
     if (error) throw error;
-    activeRevision = Number(data.revision || 1);\n    editor().loadCloudDocument(data.document, data.id);
+    activeRevision = Number(data.revision || 1);
+    editor().loadCloudDocument(data.document, data.id);
     window.dispatchEvent(new Event('codestruct-cloud-project-selected'));
     message('Cloud project opened.', 'success');
   } catch (error) {
