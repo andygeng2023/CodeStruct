@@ -122,11 +122,17 @@ function makeSlug(name) {
 }
 function buildPublishedPages(pages, slug) {
   const keys = Object.keys(pages || {});
+  const routeKeys = new Map(keys.map(key => [key.toLowerCase(), key]));
   const out = {};
   for (const [key, html] of Object.entries(pages || {})) {
-    let result = html;
-    for (const target of keys) {
-      const escaped = target.replace(/[.*+?^\${}()|[\]\\]/g, '\\function buildPublishedHTML(html, slug) {');
+    out[key] = String(html).replace(/href=(["'])(\/?[^"'/?#]+)\/?\1/gi, (match, quote, path) => {
+      const target = routeKeys.get(String(path).replace(/^\/+|\/+$/g, '').toLowerCase());
+      return target ? 'href="?slug=' + encodeURIComponent(slug) + '&page=' + encodeURIComponent(target) + '"' : match;
+    });
+  }
+  return out;
+}
+function buildPublishedHTML(html, slug) {');
       const route = '?slug=' + encodeURIComponent(slug) + '&page=' + encodeURIComponent(target);
       result = result.replace(new RegExp('href=(["\\'])/?' + escaped + '/?\\1', 'gi'), 'href="' + route + '"');
     }
@@ -137,7 +143,7 @@ function buildPublishedPages(pages, slug) {
 function buildPublishedHTML(html, slug) {
   const endpoint = 'https://syylksyuulzljivcvopo.supabase.co/functions/v1/sytely-site';
   const slugLiteral = JSON.stringify(slug);
-  const script = '<script>(function(){var slug=' + slugLiteral + ';var endpoint=' + JSON.stringify(endpoint) + ';document.querySelectorAll("form").forEach(function(form){form.querySelectorAll("input,textarea,select").forEach(function(el,i){if(!el.name)el.name="field_"+(i+1)});form.querySelectorAll("button").forEach(function(btn){if(!btn.type||btn.type==="button")btn.type="submit"});var status=document.createElement("p");status.setAttribute("role","status");form.appendChild(status);form.addEventListener("submit",async function(event){event.preventDefault();var payload={};new FormData(form).forEach(function(value,key){payload[key]=String(value).slice(0,2000)});status.textContent="Sending…";try{var response=await fetch(endpoint+"?slug="+encodeURIComponent(slug),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({payload:payload})});if(!response.ok)throw new Error("Submission failed ("+response.status+")");status.textContent="Thanks. Your message was sent.";form.reset()}catch(error){status.textContent=error.message||"Could not send your message."}})})})();<\/script>';
+  const script = '<script>(function(){var slug=' + slugLiteral + ';var endpoint=' + JSON.stringify(endpoint) + ';document.querySelectorAll("form").forEach(function(form){form.querySelectorAll("input,textarea,select").forEach(function(el,i){if(!el.name)el.name="field_"+(i+1)});form.querySelectorAll("button").forEach(function(btn){if(!btn.type||btn.type==="button")btn.type="submit"});var trap=document.createElement("input");trap.type="text";trap.name="website";trap.tabIndex=-1;trap.autocomplete="off";trap.setAttribute("aria-hidden","true");trap.style.position="fixed";trap.style.left="-10000px";form.appendChild(trap);var status=document.createElement("p");status.setAttribute("role","status");form.appendChild(status);form.addEventListener("submit",async function(event){event.preventDefault();var payload={};new FormData(form).forEach(function(value,key){payload[key]=String(value).slice(0,2000)});status.textContent="Sending…";try{var response=await fetch(endpoint+"?slug="+encodeURIComponent(slug),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({payload:payload})});if(!response.ok)throw new Error("Submission failed ("+response.status+")");status.textContent="Thanks. Your message was sent.";form.reset()}catch(error){status.textContent=error.message||"Could not send your message."}})})})();<\/script>';
   return html.replace('</body>', script + '</body>');
 }
 async function saveCloudProject(publish) {
