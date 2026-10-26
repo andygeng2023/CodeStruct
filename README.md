@@ -10,7 +10,7 @@ Open `index.html` in a modern browser, or run:
 python3 -m http.server 8000
 ```
 
-Then visit `http://localhost:8000`. Cloud save, CMS sync, form inbox and publishing require a configured Supabase project and an authenticated account.
+Then visit `http://localhost:8000`. Cloud save, CMS sync, form inbox and publishing require a configured Supabase project and an authenticated account. The tracked schema is in `supabase/migrations/20261026_production_editor_features.sql`.
 
 ## Implemented editor workflows
 
