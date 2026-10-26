@@ -155,7 +155,9 @@ async function saveCloudProject(publish) {
     };
     if (!existingId) row.slug = slug;
     if (publish) {
-      const pages = buildPublishedPages(editor().getAllExportHTML(), slug);\n      const activePageKey = String(doc.activePage || 'home').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'home';\n      row.published_document = { ...doc, html: pages[activePageKey] || buildPublishedHTML(editor().getExportHTML(), slug), pages, published_at: new Date().toISOString() };
+      const pages = buildPublishedPages(editor().getAllExportHTML(), slug);
+      const activePageKey = String(doc.activePage || 'home').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'home';
+      row.published_document = { ...doc, html: pages[activePageKey] || buildPublishedHTML(editor().getExportHTML(), slug), pages, published_at: new Date().toISOString() };
       row.is_published = true;
       row.published_at = new Date().toISOString();
     }
