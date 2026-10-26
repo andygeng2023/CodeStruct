@@ -233,7 +233,7 @@ async function showVersionHistory() {
     versions.map(v => '<div class="cloud-project"><strong>' + esc(v.label) + '</strong><small>' + esc(new Date(v.created_at).toLocaleString()) + '</small><button class="button secondary full-button" data-restore-version="' + esc(v.id) + '">Restore version</button></div>').join('') +
     (versions.length ? '' : '<p class="hint">No saved versions yet.</p>') + '</div>');
   $('#historyBack')?.addEventListener('click', showCloudPanel);
-  $('[data-restore-version]').forEach(button => button.addEventListener('click', () => {
+  $$('[data-restore-version]').forEach(button => button.addEventListener('click', () => {
     const version = versions.find(v => v.id === button.dataset.restoreVersion);
     if (!version) return;
     editor().loadCloudDocument(version.document, id);
@@ -276,7 +276,7 @@ async function showCollaborators() {
     '<section class="cloud-project"><strong>' + esc(member.email) + '</strong><small>' + esc(member.role) + ' · invited ' + esc(new Date(member.invited_at).toLocaleDateString()) + '</small>' +
     (owner ? '<button class="button secondary full-button" data-remove-member="' + esc(member.user_id) + '">Remove access</button>' : '') + '</section>'
   ).join('') : '<p class="hint">No invited collaborators yet.</p>';
-  $('[data-remove-member]').forEach(button => button.addEventListener('click', async () => {
+  $$('[data-remove-member]').forEach(button => button.addEventListener('click', async () => {
     if (!confirm('Remove this collaborator’s access?')) return;
     const { error } = await supabase.from('sytely_project_members').delete().eq('project_id', projectId).eq('user_id', button.dataset.removeMember);
     if (error) return message(error.message || 'Could not remove access.', 'error');
@@ -323,7 +323,7 @@ async function showFormInbox() {
     '<div class="page-list"><button id="inboxBack" class="button secondary full-button">Back to cloud projects</button>' +
     (rows.length ? rows.map(row => '<section class="cms-collection"><strong>' + esc(new Date(row.created_at).toLocaleString()) + '</strong><pre style="white-space:pre-wrap;overflow-wrap:anywhere">' + esc(JSON.stringify(row.payload, null, 2)) + '</pre><button data-delete-submission="' + esc(row.id) + '" class="button secondary full-button">Delete submission</button></section>').join('') : '<p class="hint">No submissions yet. Publish a page containing a form and test it.</p>') + '</div>');
   $('#inboxBack')?.addEventListener('click', showCloudPanel);
-  $('[data-delete-submission]').forEach(button => button.addEventListener('click', async () => {
+  $$('[data-delete-submission]').forEach(button => button.addEventListener('click', async () => {
     const { error: deleteError } = await supabase.from('sytely_form_submissions').delete().eq('id', button.dataset.deleteSubmission).eq('project_id', projectId);
     if (deleteError) return message(deleteError.message || 'Delete failed.', 'error');
     await showFormInbox();
