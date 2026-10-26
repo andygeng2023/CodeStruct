@@ -26,7 +26,7 @@ Then visit `http://localhost:8000`. Cloud save, CMS sync, form inbox and publish
 ## Cloud and publishing workflows
 
 - Supabase email/password authentication, cloud project save/load, optimistic revision checks, version snapshots and restore.
-- Supabase Realtime editor presence and change notifications. Saves with stale revisions are rejected rather than silently overwriting newer data.
+- Owner-managed email invitations with editor/viewer roles, Supabase Realtime presence and remote selection highlights in private, membership-authorized channels. Optimistic revision checks reject stale saves instead of silently overwriting newer data.
 - Cloud CMS sync into `sytely_cms_items`; published pages resolve bound collections dynamically on request.
 - Multi-page publishing snapshots and query-string routes such as `?slug=YOUR-SITE-SLUG&page=about`.
 - Authenticated asset uploads into Supabase Storage.
