@@ -151,6 +151,16 @@ async function saveCloudProject(publish) {
     if (button) button.disabled = false;
   }
 }
+async function saveVersion() {
+  const projectId = editor().getCloudProjectId();
+  if (!currentUser || !projectId) return message('Save this project to cloud first.', 'error');
+  const { error } = await supabase.from('sytely_project_versions').insert({
+    project_id: projectId, owner_id: currentUser.id,
+    label: 'Saved version ' + new Date().toLocaleString(), document: currentDocument()
+  });
+  if (error) return message(error.message || 'Could not save version.', 'error');
+  message('Version saved.', 'success');
+}
 async function loadCloudProject(id) {
   try {
     const { data, error } = await supabase.from('sytely_projects')
